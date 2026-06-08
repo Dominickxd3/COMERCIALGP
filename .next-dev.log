@@ -1,0 +1,20 @@
+
+> comercial-gp@0.1.0 dev
+> next dev --hostname 0.0.0.0 --port 3000
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+✓ Ready in 962ms
+Creating turbopack project { dir: 'D:\\COMERCIAL_WEB_GERENCIA', testMode: true }
+
+○ Compiling / ...
+ GET / 200 in 9.6s (next.js: 7.4s, application-code: 2.2s)
+ GET / 200 in 10.1s (next.js: 8.1s, application-code: 1964ms)
+ GET / 200 in 344ms (next.js: 10ms, application-code: 334ms)
+ GET / 200 in 330ms (next.js: 15ms, application-code: 315ms)
+ GET / 200 in 347ms (next.js: 10ms, application-code: 337ms)
+✓ Compiled in 219ms
+✓ Compiled in 86ms
+✓ Compiled in 925ms
+[?25h
