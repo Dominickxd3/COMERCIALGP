@@ -1,0 +1,35 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { TopSubfamilyItem } from "./commercial-data";
+import { formatCurrencyCompact, formatKilosCompact } from "./commercial-data";
+
+export function TopSubfamilyList({ items }: { items: TopSubfamilyItem[] }) {
+  return (
+    <Card className="border-slate-200 bg-white shadow-sm">
+      <CardHeader className="space-y-1 pb-3">
+        <CardTitle className="text-base font-semibold text-slate-950">Top subfamilias</CardTitle>
+        <CardDescription className="text-sm text-slate-500">Top 5 subfamilias por venta.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {items.map((item, index) => (
+          <div key={item.subfamilia} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-950">{index + 1}. {item.subfamilia}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {item.familia} · {formatCurrencyCompact(item.venta)} · {formatKilosCompact(item.kilos)}
+                </p>
+              </div>
+              <p className="text-sm font-semibold text-slate-950">{item.participacion}%</p>
+            </div>
+            <div className="mt-3 h-1.5 rounded-full bg-slate-200/70">
+              <div
+                className="h-1.5 rounded-full bg-[#2563EB]"
+                style={{ width: `${Math.min(item.participacion, 100)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
