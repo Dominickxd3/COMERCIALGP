@@ -5,6 +5,12 @@ export type CommercialFilterState = {
   versionCut: string;
 };
 
+export type PeriodOption = {
+  value: string;
+  label: string;
+  month: string;
+};
+
 export type EvolucionMensual = {
   periodo: string;
   mes: string;
@@ -37,10 +43,25 @@ export type TopSubfamilyItem = {
   participacion: number;
 };
 
+const periodOptions: PeriodOption[] = [
+  { value: "202601", label: "202601 - Enero", month: "Enero" },
+  { value: "202602", label: "202602 - Febrero", month: "Febrero" },
+  { value: "202603", label: "202603 - Marzo", month: "Marzo" },
+  { value: "202604", label: "202604 - Abril", month: "Abril" },
+  { value: "202605", label: "202605 - Mayo", month: "Mayo" },
+  { value: "202606", label: "202606 - Junio", month: "Junio" },
+  { value: "202607", label: "202607 - Julio", month: "Julio" },
+  { value: "202608", label: "202608 - Agosto", month: "Agosto" },
+  { value: "202609", label: "202609 - Septiembre", month: "Septiembre" },
+  { value: "202610", label: "202610 - Octubre", month: "Octubre" },
+  { value: "202611", label: "202611 - Noviembre", month: "Noviembre" },
+  { value: "202612", label: "202612 - Diciembre", month: "Diciembre" },
+];
+
 export const commercialFilterOptions = {
   years: ["2026"],
-  periods: ["Enero", "Febrero", "Marzo", "Abril", "Mayo"],
-  origins: ["Todos", "Lima Norte", "Lima Sur", "Provincia"],
+  periods: periodOptions,
+  origins: ["Todos", "GP", "TDA"],
   versionCuts: ["Corte 2026-03-31", "Corte 2026-02-29", "Corte 2026-01-31"],
 } as const;
 
@@ -50,6 +71,13 @@ const monthlyDataSource: EvolucionMensual[] = [
   { periodo: "202603", mes: "Marzo", venta: 3_330_000, kilos: 312_000, precioPromedio: 10.67, unidades: 26_000 },
   { periodo: "202604", mes: "Abril", venta: 3_760_000, kilos: 398_000, precioPromedio: 9.45, unidades: 29_500 },
   { periodo: "202605", mes: "Mayo", venta: 4_280_000, kilos: 425_000, precioPromedio: 10.07, unidades: 32_000 },
+  { periodo: "202606", mes: "Junio", venta: 4_120_000, kilos: 411_000, precioPromedio: 10.02, unidades: 31_600 },
+  { periodo: "202607", mes: "Julio", venta: 4_460_000, kilos: 438_000, precioPromedio: 10.18, unidades: 33_200 },
+  { periodo: "202608", mes: "Agosto", venta: 4_710_000, kilos: 456_000, precioPromedio: 10.33, unidades: 34_500 },
+  { periodo: "202609", mes: "Septiembre", venta: 4_530_000, kilos: 449_000, precioPromedio: 10.09, unidades: 33_900 },
+  { periodo: "202610", mes: "Octubre", venta: 4_860_000, kilos: 471_000, precioPromedio: 10.32, unidades: 35_100 },
+  { periodo: "202611", mes: "Noviembre", venta: 5_020_000, kilos: 484_000, precioPromedio: 10.37, unidades: 35_900 },
+  { periodo: "202612", mes: "Diciembre", venta: 5_480_000, kilos: 512_000, precioPromedio: 10.7, unidades: 37_400 },
 ];
 
 const familyDataSource: FamilyParticipationItem[] = [
@@ -105,9 +133,16 @@ export function formatPriceKg(value: number) {
   return `S/ ${value.toFixed(2)} / kg`;
 }
 
+export function getPeriodLabel(periodValue: string) {
+  return commercialFilterOptions.periods.find((period) => period.value === periodValue)?.label ?? periodValue;
+}
+
+export function getPeriodMonth(periodValue: string) {
+  return commercialFilterOptions.periods.find((period) => period.value === periodValue)?.month ?? periodValue;
+}
+
 export function getCommercialDashboardData(filters: CommercialFilterState) {
-  const periods: readonly string[] = commercialFilterOptions.periods;
-  const monthIndex = periods.indexOf(filters.period);
+  const monthIndex = monthlyDataSource.findIndex((item) => item.periodo === filters.period);
   const boundedIndex = monthIndex >= 0 ? monthIndex : 2;
   const monthlyData = monthlyDataSource.slice(0, boundedIndex + 1);
   const currentMonth = monthlyData.at(-1) ?? monthlyDataSource[2];
@@ -117,24 +152,48 @@ export function getCommercialDashboardData(filters: CommercialFilterState) {
   const totalKilos = monthlyData.reduce((sum, item) => sum + item.kilos, 0);
   const totalUnits = monthlyData.reduce((sum, item) => sum + item.unidades, 0);
   const averagePrice = totalSales / totalKilos;
+  const activeFamilies = topFamilyDataSource.length;
+  const activeProducts = 222;
 
   const salesDelta = previousMonth ? ((currentMonth.venta - previousMonth.venta) / previousMonth.venta) * 100 : 0;
   const kilosDelta = previousMonth ? ((currentMonth.kilos - previousMonth.kilos) / previousMonth.kilos) * 100 : 0;
-  const priceDelta = previousMonth ? ((currentMonth.precioPromedio - previousMonth.precioPromedio) / previousMonth.precioPromedio) * 100 : 0;
-  const unitsDelta = previousMonth ? ((currentMonth.unidades - previousMonth.unidades) / previousMonth.unidades) * 100 : 0;
 
   return {
     filters,
     monthlyData,
     executiveSummary: `Al periodo seleccionado, el negocio mantiene una venta acumulada de ${formatCurrencyCompact(totalSales)}, con ${formatKilosCompact(totalKilos)} vendidos y un precio promedio de ${formatPriceKg(averagePrice)}. Las principales familias concentran la mayor participación comercial del periodo.`,
     kpis: [
-      { title: "Venta Total", value: formatCurrencyCompact(totalSales), delta: `${salesDelta >= 0 ? "+" : ""}${salesDelta.toFixed(1)}%`, helper: "Vs. periodo anterior" },
-      { title: "Kilos Vendidos", value: formatKilosCompact(totalKilos), delta: `${kilosDelta >= 0 ? "+" : ""}${kilosDelta.toFixed(1)}%`, helper: "Volumen acumulado" },
-      { title: "Precio Promedio Kg", value: formatPriceKg(averagePrice), delta: `${priceDelta >= 0 ? "+" : ""}${priceDelta.toFixed(1)}%`, helper: "Ticket promedio por kilo" },
-      { title: "Unidades Vendidas", value: formatUnitsCompact(totalUnits), delta: `${unitsDelta >= 0 ? "+" : ""}${unitsDelta.toFixed(1)}%`, helper: "Unidades acumuladas" },
+      {
+        title: "Venta Total",
+        value: formatCurrencyCompact(totalSales),
+        delta: `${salesDelta >= 0 ? "+" : ""}${salesDelta.toFixed(1)}%`,
+        helper: "Venta acumulada del periodo",
+      },
+      {
+        title: "Kilos Vendidos",
+        value: formatKilosCompact(totalKilos),
+        delta: `${kilosDelta >= 0 ? "+" : ""}${kilosDelta.toFixed(1)}%`,
+        helper: "Volumen comercial acumulado",
+      },
+      {
+        title: "Familias Activas",
+        value: formatUnitsCompact(activeFamilies),
+        delta: "+0.0%",
+        helper: "Familias con venta en el periodo",
+      },
+      {
+        title: "Productos Activos",
+        value: formatUnitsCompact(activeProducts),
+        delta: "+2.4%",
+        helper: "Productos con movimiento comercial",
+      },
     ],
     familyData: familyDataSource,
     topFamilies: topFamilyDataSource,
     topSubfamilies: topSubfamilyDataSource,
+    meta: {
+      totalUnits,
+      averagePrice,
+    },
   };
 }

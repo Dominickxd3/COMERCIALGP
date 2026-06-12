@@ -1,14 +1,27 @@
-export default function ProductosPage() {
-  return (
-    <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">Productos</h1>
-        <p className="mt-1 text-sm text-slate-500">Ranking y detalle comercial por producto.</p>
-      </div>
+import { ProductosView } from "@/components/comercial/productos/ProductosView";
+import {
+  getSubfamilyOptions,
+  productFilterOptions,
+} from "@/components/comercial/productos/product-data";
 
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500 shadow-sm">
-        Ruta preparada para el modulo de productos.
-      </div>
-    </section>
-  );
+type ProductosPageProps = {
+  searchParams: Promise<{ familia?: string; subfamilia?: string }>;
+};
+
+export default async function ProductosPage({ searchParams }: ProductosPageProps) {
+  const params = await searchParams;
+  const requestedFamily = params.familia;
+  const initialFamily =
+    requestedFamily && productFilterOptions.families.includes(requestedFamily as never)
+      ? requestedFamily
+      : productFilterOptions.families[0];
+
+  const allowedSubfamilies = getSubfamilyOptions(initialFamily);
+  const requestedSubfamily = params.subfamilia;
+  const initialSubfamily =
+    requestedSubfamily && allowedSubfamilies.includes(requestedSubfamily)
+      ? requestedSubfamily
+      : "Todas";
+
+  return <ProductosView initialFamily={initialFamily} initialSubfamily={initialSubfamily} />;
 }

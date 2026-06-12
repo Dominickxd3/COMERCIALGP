@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Cell, Pie, PieChart, Sector, Tooltip } from "recharts";
+import { Cell, Pie, PieChart, Sector } from "recharts";
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
+import { cn } from "@/lib/utils";
 import type { FamilyParticipationItem } from "./commercial-data";
 import { formatCurrencyCompact, formatKilosCompact, formatPercent } from "./commercial-data";
 
@@ -35,7 +36,7 @@ function renderActiveShape(props: ActiveShapeProps) {
         cx={cx}
         cy={cy}
         innerRadius={innerRadius}
-        outerRadius={outerRadius + 6}
+        outerRadius={outerRadius + 8}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
@@ -43,46 +44,14 @@ function renderActiveShape(props: ActiveShapeProps) {
       <Sector
         cx={cx}
         cy={cy}
-        innerRadius={outerRadius + 10}
-        outerRadius={outerRadius + 14}
+        innerRadius={outerRadius + 12}
+        outerRadius={outerRadius + 16}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
         opacity={0.18}
       />
     </g>
-  );
-}
-
-function PieTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{ payload: FamilyParticipationItem }>;
-}) {
-  if (!active || !payload?.length) return null;
-  const item = payload[0]?.payload;
-  if (!item) return null;
-
-  return (
-    <div className="min-w-40 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] shadow-lg">
-      <p className="font-semibold text-slate-950">{item.familia}</p>
-      <div className="mt-2 space-y-1 text-slate-600">
-        <div className="flex items-center justify-between gap-3">
-          <span>Venta</span>
-          <span className="font-semibold text-slate-950">{formatCurrencyCompact(item.venta)}</span>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <span>Kilos</span>
-          <span className="font-semibold text-slate-950">{formatKilosCompact(item.kilos)}</span>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <span>Participación</span>
-          <span className="font-semibold text-slate-950">{formatPercent(item.participacion)}</span>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -110,9 +79,9 @@ export function FamilyParticipationCard({ items }: { items: FamilyParticipationI
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-6 md:grid-cols-[200px_minmax(0,1fr)] md:items-center">
-          <div className="flex items-center justify-center md:justify-center">
-            <div className="relative h-52 w-52 md:h-44 md:w-44">
+        <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6">
+          <div className="flex min-h-[300px] items-center justify-center">
+            <div className="relative h-[240px] w-[240px]">
               <ChartContainer className="h-full w-full" config={chartConfig}>
                 <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                   <Pie
@@ -120,7 +89,7 @@ export function FamilyParticipationCard({ items }: { items: FamilyParticipationI
                     dataKey="venta"
                     nameKey="familia"
                     innerRadius={58}
-                    outerRadius={84}
+                    outerRadius={88}
                     paddingAngle={3}
                     labelLine={false}
                     isAnimationActive
@@ -130,27 +99,25 @@ export function FamilyParticipationCard({ items }: { items: FamilyParticipationI
                       <Cell key={item.familia} fill={item.color} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    content={<PieTooltip />}
-                    wrapperStyle={{ zIndex: 50 }}
-                    offset={24}
-                    allowEscapeViewBox={{ x: true, y: true }}
-                  />
                 </PieChart>
               </ChartContainer>
-              <div className="pointer-events-none absolute inset-[38px] flex items-center justify-center rounded-full border border-slate-100 bg-white text-center shadow-sm">
+              <div className="pointer-events-none absolute inset-[42px] flex items-center justify-center rounded-full border border-slate-100 bg-white text-center shadow-sm">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">TOP</p>
-                  <p className="text-lg font-semibold text-slate-950">{activeItem?.familia}</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-950">{activeItem?.familia}</p>
                   <p className="mt-1 text-sm font-medium text-slate-500">
                     {formatPercent(activeItem?.participacion ?? 0)}
                   </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-950">
+                    {formatCurrencyCompact(activeItem?.venta ?? 0)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">{formatKilosCompact(activeItem?.kilos ?? 0)}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-3 px-1 md:px-0">
+          <div className="space-y-3">
             {items.map((item, index) => {
               const isActive = activeIndex === index;
 
@@ -159,10 +126,14 @@ export function FamilyParticipationCard({ items }: { items: FamilyParticipationI
                   key={item.familia}
                   type="button"
                   onMouseEnter={() => setActiveIndex(index)}
+                  onFocus={() => setActiveIndex(index)}
                   onClick={() => setActiveIndex(index)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition-colors ${
-                    isActive ? "border-blue-200 bg-blue-50/60" : "border-slate-200 bg-white hover:bg-slate-50"
-                  }`}
+                  className={cn(
+                    "w-full rounded-xl border p-4 text-left transition-all",
+                    isActive
+                      ? "border-blue-300 bg-blue-50/70 shadow-sm"
+                      : "border-border bg-card hover:bg-muted/40",
+                  )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">

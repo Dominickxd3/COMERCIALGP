@@ -1,22 +1,29 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import {
-  Area,
   Bar,
+  BarChart,
   CartesianGrid,
-  ComposedChart,
-  ReferenceDot,
-  ReferenceLine,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChartContainer } from "@/components/ui/chart";
 import type { EvolucionMensual } from "./commercial-data";
-import { formatCurrencyCompact, formatKilosCompact, formatPriceKg } from "./commercial-data";
+import { formatCurrencyCompact, formatKilosCompact } from "./commercial-data";
 
-function TooltipContent({
+type ActiveView = "comparativo" | "venta" | "kilos";
+
+const axisLine = { stroke: "#CBD5E1", strokeWidth: 1 };
+const tickLine = { stroke: "#CBD5E1", strokeWidth: 1 };
+const tick = { fill: "#64748B", fontSize: 12 };
+
+function CustomTooltip({
   active,
   payload,
 }: {
@@ -28,8 +35,9 @@ function TooltipContent({
   if (!point) return null;
 
   return (
-    <div className="min-w-48 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs shadow-xl">
+    <div className="min-w-52 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs shadow-xl">
       <p className="font-semibold text-slate-950">{point.mes}</p>
+      <div className="mt-1 text-slate-500">Periodo: {point.periodo}</div>
       <div className="mt-2 space-y-1.5 text-slate-600">
         <div className="flex items-center justify-between gap-3">
           <span>Venta</span>
@@ -39,212 +47,186 @@ function TooltipContent({
           <span>Kilos</span>
           <span className="font-semibold text-slate-950">{formatKilosCompact(point.kilos)}</span>
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <span>Precio promedio</span>
-          <span className="font-semibold text-slate-950">{formatPriceKg(point.precioPromedio)}</span>
-        </div>
       </div>
     </div>
   );
 }
 
-function LegendContent() {
-  return (
-    <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 pb-2 text-xs text-slate-500">
-      <span className="flex items-center gap-2">
-        <span className="h-2.5 w-2.5 rounded-full bg-[#2563EB]" />
-        Venta
-      </span>
-      <span className="flex items-center gap-2">
-        <span className="h-2.5 w-2.5 rounded-sm bg-[#93C5FD]" />
-        Kilos
-      </span>
-      <span className="flex items-center gap-2">
-        <span className="h-0.5 w-4 rounded-full bg-[#EF4444]/70" />
-        Precio promedio
-      </span>
-    </div>
+export function CommercialEvolutionChart({ data }: { data: EvolucionMensual[]; selectedMonth: string }) {
+  const [activeView, setActiveView] = useState<ActiveView>("comparativo");
+
+  const chartConfig = useMemo(
+    () => ({
+      venta: { label: "Venta", color: "#2563EB" },
+      kilos: { label: "Kilos", color: "#93C5FD" },
+    }),
+    [],
   );
-}
 
-const axisLine = { stroke: "#CBD5E1", strokeWidth: 1 };
-const tickLine = { stroke: "#CBD5E1", strokeWidth: 1 };
-const tick = { fill: "#64748B", fontSize: 12 };
-
-export function CommercialEvolutionChart({
-  data,
-  selectedMonth,
-}: {
-  data: EvolucionMensual[];
-  selectedMonth: string;
-}) {
-  const selectedPoint = data.find((item) => item.mes === selectedMonth) ?? data.at(-1);
+  const currentViewLabel =
+    activeView === "comparativo"
+      ? "Vista actual: Venta y kilos mensual"
+      : activeView === "venta"
+        ? "Vista actual: Venta mensual"
+        : "Vista actual: Kilos vendidos";
 
   return (
     <Card className="scroll-mt-24 border-slate-200 bg-white shadow-sm">
-      <CardHeader className="space-y-1 pb-2">
-        <CardTitle className="text-lg font-semibold text-slate-950">Evolución Comercial Mensual</CardTitle>
-        <CardDescription className="text-sm text-slate-500">
-          Ventas y kilos acumulados desde enero hasta el periodo seleccionado.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="hidden md:block">
-          <LegendContent />
-          <ChartContainer
-            className="h-[320px] w-full"
-            config={{
-              venta: { label: "Venta", color: "#2563EB" },
-              kilos: { label: "Kilos", color: "#93C5FD" },
-              precioPromedio: { label: "Precio promedio", color: "#EF4444" },
-            }}
-          >
-            <ComposedChart data={data} margin={{ top: 20, right: 32, left: 24, bottom: 24 }}>
-              <defs>
-                <linearGradient id="ventaFillHome" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563EB" stopOpacity={0.16} />
-                  <stop offset="95%" stopColor="#2563EB" stopOpacity={0.03} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="#CBD5E1" strokeDasharray="3 3" vertical horizontal />
-              <XAxis
-                dataKey="mes"
-                axisLine={axisLine}
-                tickLine={tickLine}
-                tick={tick}
-                tickMargin={10}
-              />
-              <YAxis
-                yAxisId="venta"
-                orientation="left"
-                axisLine={axisLine}
-                tickLine={tickLine}
-                tick={tick}
-                width={76}
-                tickFormatter={(value: number) => formatCurrencyCompact(value)}
-              />
-              <YAxis
-                yAxisId="kilos"
-                orientation="right"
-                axisLine={axisLine}
-                tickLine={tickLine}
-                tick={tick}
-                width={64}
-                tickFormatter={(value: number) => formatKilosCompact(value).replace(" kg", "")}
-              />
-              <ReferenceLine x={selectedMonth} stroke="#CBD5E1" strokeDasharray="4 4" />
-              <ChartTooltip cursor={{ fill: "rgba(148, 163, 184, 0.08)" }} content={<TooltipContent />} />
-              <Area
-                yAxisId="venta"
-                type="monotone"
-                dataKey="venta"
-                name="Venta"
-                stroke="#2563EB"
-                fill="url(#ventaFillHome)"
-                fillOpacity={1}
-                strokeWidth={2.5}
-                activeDot={{ r: 5 }}
-              />
-              <Bar
-                yAxisId="kilos"
-                dataKey="kilos"
-                name="Kilos"
-                fill="#93C5FD"
-                radius={[6, 6, 0, 0]}
-                barSize={20}
-              />
-              {selectedPoint ? (
-                <ReferenceDot
-                  yAxisId="venta"
-                  x={selectedPoint.mes}
-                  y={selectedPoint.venta}
-                  r={5}
-                  fill="#2563EB"
-                  stroke="#FFFFFF"
-                  strokeWidth={2}
-                />
-              ) : null}
-            </ComposedChart>
-          </ChartContainer>
+      <CardHeader className="space-y-3 pb-2">
+        <div className="space-y-1">
+          <CardTitle className="text-lg font-semibold text-slate-950">Evolución Comercial Mensual</CardTitle>
+          <CardDescription className="text-sm text-slate-500">
+            Ventas y kilos acumulados desde enero hasta el periodo seleccionado.
+          </CardDescription>
         </div>
 
-        <div className="md:hidden">
-          <Tabs defaultValue="venta" className="gap-3">
-            <TabsList className="grid h-10 w-full grid-cols-2 rounded-xl bg-slate-100 p-1">
-              <TabsTrigger value="venta" className="rounded-lg text-sm">
-                Venta
-              </TabsTrigger>
-              <TabsTrigger value="kilos" className="rounded-lg text-sm">
-                Kilos
-              </TabsTrigger>
-            </TabsList>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs font-medium text-slate-500">{currentViewLabel}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant={activeView === "comparativo" ? "default" : "outline"}
+              onClick={() => setActiveView("comparativo")}
+              className="h-9 rounded-full px-4"
+            >
+              Comparativo
+            </Button>
+            <Button
+              type="button"
+              variant={activeView === "venta" ? "default" : "outline"}
+              onClick={() => setActiveView("venta")}
+              className="h-9 rounded-full px-4"
+            >
+              Venta
+            </Button>
+            <Button
+              type="button"
+              variant={activeView === "kilos" ? "default" : "outline"}
+              onClick={() => setActiveView("kilos")}
+              className="h-9 rounded-full px-4"
+            >
+              Kilos
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
 
-            <TabsContent value="venta">
-              <ChartContainer className="h-[240px] w-full" config={{ venta: { label: "Venta", color: "#2563EB" } }}>
-                <ComposedChart data={data} margin={{ top: 14, right: 16, left: 10, bottom: 16 }}>
-                  <defs>
-                    <linearGradient id="ventaFillMobileHome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.16} />
-                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0.03} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="#CBD5E1" strokeDasharray="3 3" vertical horizontal />
-                  <XAxis
-                    dataKey="mes"
-                    axisLine={axisLine}
-                    tickLine={tickLine}
-                    tick={tick}
-                    tickMargin={10}
-                  />
+      <CardContent className="pt-3">
+        <div className="h-[240px] w-full md:h-[320px]">
+          <ChartContainer className="h-full w-full" config={chartConfig}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={data}
+                margin={{ top: 20, right: 32, left: 24, bottom: 20 }}
+                barCategoryGap="24%"
+                barGap={8}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#DBEAFE" vertical horizontal />
+
+                <XAxis
+                  dataKey="mes"
+                  axisLine={axisLine}
+                  tickLine={tickLine}
+                  tick={tick}
+                  tickMargin={10}
+                />
+
+                {(activeView === "comparativo" || activeView === "venta") ? (
                   <YAxis
                     yAxisId="venta"
+                    orientation="left"
                     axisLine={axisLine}
                     tickLine={tickLine}
                     tick={tick}
-                    width={66}
+                    width={76}
                     tickFormatter={(value: number) => formatCurrencyCompact(value)}
                   />
-                  <ReferenceLine x={selectedMonth} stroke="#CBD5E1" strokeDasharray="4 4" />
-                  <ChartTooltip cursor={{ fill: "rgba(148, 163, 184, 0.08)" }} content={<TooltipContent />} />
-                  <Area
-                    yAxisId="venta"
-                    type="monotone"
-                    dataKey="venta"
-                    fill="url(#ventaFillMobileHome)"
-                    stroke="#2563EB"
-                    strokeWidth={2.5}
-                    activeDot={{ r: 5 }}
-                  />
-                </ComposedChart>
-              </ChartContainer>
-            </TabsContent>
+                ) : null}
 
-            <TabsContent value="kilos">
-              <ChartContainer className="h-[240px] w-full" config={{ kilos: { label: "Kilos", color: "#93C5FD" } }}>
-                <ComposedChart data={data} margin={{ top: 14, right: 16, left: 10, bottom: 16 }}>
-                  <CartesianGrid stroke="#CBD5E1" strokeDasharray="3 3" vertical horizontal />
-                  <XAxis
-                    dataKey="mes"
-                    axisLine={axisLine}
-                    tickLine={tickLine}
-                    tick={tick}
-                    tickMargin={10}
-                  />
+                {(activeView === "comparativo" || activeView === "kilos") ? (
                   <YAxis
                     yAxisId="kilos"
+                    orientation={activeView === "comparativo" ? "right" : "left"}
                     axisLine={axisLine}
                     tickLine={tickLine}
                     tick={tick}
-                    width={60}
+                    width={76}
                     tickFormatter={(value: number) => formatKilosCompact(value).replace(" kg", "")}
                   />
-                  <ReferenceLine x={selectedMonth} stroke="#CBD5E1" strokeDasharray="4 4" />
-                  <ChartTooltip cursor={{ fill: "rgba(148, 163, 184, 0.08)" }} content={<TooltipContent />} />
-                  <Bar yAxisId="kilos" dataKey="kilos" barSize={16} radius={[6, 6, 0, 0]} fill="#93C5FD" />
-                </ComposedChart>
-              </ChartContainer>
-            </TabsContent>
-          </Tabs>
+                ) : null}
+
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(148, 163, 184, 0.08)" }} />
+
+                {activeView === "comparativo" && (
+                  <>
+                    <Bar
+                      yAxisId="venta"
+                      dataKey="venta"
+                      name="Venta"
+                      fill="#2563EB"
+                      radius={[8, 8, 0, 0]}
+                      barSize={36}
+                      maxBarSize={46}
+                      animationDuration={900}
+                    >
+                      {data.map((item) => (
+                        <Cell key={`venta-${item.periodo}`} fill="#2563EB" />
+                      ))}
+                    </Bar>
+
+                    <Bar
+                      yAxisId="kilos"
+                      dataKey="kilos"
+                      name="Kilos"
+                      fill="#93C5FD"
+                      radius={[8, 8, 0, 0]}
+                      barSize={36}
+                      maxBarSize={46}
+                      animationDuration={900}
+                    >
+                      {data.map((item) => (
+                        <Cell key={`kilos-${item.periodo}`} fill="#93C5FD" />
+                      ))}
+                    </Bar>
+                  </>
+                )}
+
+                {activeView === "venta" && (
+                  <Bar
+                    yAxisId="venta"
+                    dataKey="venta"
+                    name="Venta"
+                    fill="#2563EB"
+                    radius={[10, 10, 0, 0]}
+                    barSize={64}
+                    maxBarSize={82}
+                    animationDuration={900}
+                  >
+                    {data.map((item) => (
+                      <Cell key={`venta-single-${item.periodo}`} fill="#2563EB" />
+                    ))}
+                  </Bar>
+                )}
+
+                {activeView === "kilos" && (
+                  <Bar
+                    yAxisId="kilos"
+                    dataKey="kilos"
+                    name="Kilos"
+                    fill="#93C5FD"
+                    radius={[10, 10, 0, 0]}
+                    barSize={64}
+                    maxBarSize={82}
+                    animationDuration={900}
+                  >
+                    {data.map((item) => (
+                      <Cell key={`kilos-single-${item.periodo}`} fill="#93C5FD" />
+                    ))}
+                  </Bar>
+                )}
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </CardContent>
     </Card>

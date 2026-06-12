@@ -1,14 +1,17 @@
-export default function SubfamiliasPage() {
-  return (
-    <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">Subfamilias</h1>
-        <p className="mt-1 text-sm text-slate-500">Desglose comercial por familia y subfamilia.</p>
-      </div>
+import { SubfamiliasView } from "@/components/comercial/subfamilias/SubfamiliasView";
+import { subfamilyFilterOptions } from "@/components/comercial/subfamilias/subfamily-data";
 
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500 shadow-sm">
-        Ruta preparada para el modulo de subfamilias.
-      </div>
-    </section>
-  );
+type SubfamiliasPageProps = {
+  searchParams: Promise<{ familia?: string }>;
+};
+
+export default async function SubfamiliasPage({ searchParams }: SubfamiliasPageProps) {
+  const params = await searchParams;
+  const requestedFamily = params.familia;
+  const initialFamily =
+    requestedFamily && subfamilyFilterOptions.families.includes(requestedFamily as never)
+      ? requestedFamily
+      : subfamilyFilterOptions.families[0];
+
+  return <SubfamiliasView initialFamily={initialFamily} />;
 }

@@ -19,12 +19,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type { CommercialFilterState, PeriodOption } from "./commercial-data";
-import { commercialFilterOptions } from "./commercial-data";
+import type { FamilyFiltersState, PeriodOption } from "./family-data";
+import { familyFilterOptions } from "./family-data";
 
-type CommercialFiltersProps = {
-  filters: CommercialFilterState;
-  onFilterChange: <K extends keyof CommercialFilterState>(key: K, value: CommercialFilterState[K]) => void;
+type FamilyFiltersProps = {
+  filters: FamilyFiltersState;
+  onFilterChange: <K extends keyof FamilyFiltersState>(key: K, value: FamilyFiltersState[K]) => void;
 };
 
 function isPeriodOption(option: string | PeriodOption): option is PeriodOption {
@@ -44,9 +44,7 @@ function FilterField({
 }) {
   const periodOptions = options.filter(isPeriodOption);
   const selectedLabel =
-    typeof options[0] === "string"
-      ? value
-      : periodOptions.find((option) => option.value === value)?.label;
+    typeof options[0] === "string" ? value : periodOptions.find((option) => option.value === value)?.label;
 
   return (
     <div className="space-y-1.5">
@@ -72,34 +70,40 @@ function FilterField({
   );
 }
 
-function FiltersCard({ filters, onFilterChange }: CommercialFiltersProps) {
+function FiltersCard({ filters, onFilterChange }: FamilyFiltersProps) {
   return (
     <Card className="border-slate-200 bg-white shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold text-slate-950">Filtros comerciales</CardTitle>
+        <CardTitle className="text-sm font-semibold text-slate-950">Filtros de familia</CardTitle>
         <CardDescription className="text-sm text-slate-500">
-          Selecciona año, periodo y origen para actualizar el resumen.
+          Selecciona año, periodo, origen y familia para analizar el desempeño comercial.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <FilterField
             label="Año"
             value={filters.year}
-            options={commercialFilterOptions.years}
+            options={familyFilterOptions.years}
             onValueChange={(value) => onFilterChange("year", value)}
           />
           <FilterField
             label="Periodo"
             value={filters.period}
-            options={commercialFilterOptions.periods}
+            options={familyFilterOptions.periods}
             onValueChange={(value) => onFilterChange("period", value)}
           />
           <FilterField
             label="Origen"
             value={filters.origin}
-            options={commercialFilterOptions.origins}
+            options={familyFilterOptions.origins}
             onValueChange={(value) => onFilterChange("origin", value)}
+          />
+          <FilterField
+            label="Familia"
+            value={filters.family}
+            options={familyFilterOptions.families}
+            onValueChange={(value) => onFilterChange("family", value)}
           />
         </div>
       </CardContent>
@@ -107,7 +111,7 @@ function FiltersCard({ filters, onFilterChange }: CommercialFiltersProps) {
   );
 }
 
-export function CommercialFilters({ filters, onFilterChange }: CommercialFiltersProps) {
+export function FamilyFilters({ filters, onFilterChange }: FamilyFiltersProps) {
   return (
     <>
       <div className="hidden lg:block">
@@ -124,29 +128,35 @@ export function CommercialFilters({ filters, onFilterChange }: CommercialFilters
           </SheetTrigger>
           <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 pt-4">
             <SheetHeader className="text-left">
-              <SheetTitle>Filtros comerciales</SheetTitle>
+              <SheetTitle>Filtros de familia</SheetTitle>
               <SheetDescription>
-                Selecciona año, periodo y origen para actualizar el resumen.
+                Selecciona año, periodo, origen y familia para analizar el desempeño comercial.
               </SheetDescription>
             </SheetHeader>
             <div className="mt-6 grid gap-4">
               <FilterField
                 label="Año"
                 value={filters.year}
-                options={commercialFilterOptions.years}
+                options={familyFilterOptions.years}
                 onValueChange={(value) => onFilterChange("year", value)}
               />
               <FilterField
                 label="Periodo"
                 value={filters.period}
-                options={commercialFilterOptions.periods}
+                options={familyFilterOptions.periods}
                 onValueChange={(value) => onFilterChange("period", value)}
               />
               <FilterField
                 label="Origen"
                 value={filters.origin}
-                options={commercialFilterOptions.origins}
+                options={familyFilterOptions.origins}
                 onValueChange={(value) => onFilterChange("origin", value)}
+              />
+              <FilterField
+                label="Familia"
+                value={filters.family}
+                options={familyFilterOptions.families}
+                onValueChange={(value) => onFilterChange("family", value)}
               />
             </div>
             <SheetFooter className="mt-6">

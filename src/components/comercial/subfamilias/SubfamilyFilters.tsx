@@ -19,12 +19,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type { CommercialFilterState, PeriodOption } from "./commercial-data";
-import { commercialFilterOptions } from "./commercial-data";
+import type { PeriodOption, SubfamilyFiltersState } from "./subfamily-data";
+import { getSubfamilyOptions, subfamilyFilterOptions } from "./subfamily-data";
 
-type CommercialFiltersProps = {
-  filters: CommercialFilterState;
-  onFilterChange: <K extends keyof CommercialFilterState>(key: K, value: CommercialFilterState[K]) => void;
+type SubfamilyFiltersProps = {
+  filters: SubfamilyFiltersState;
+  onFilterChange: <K extends keyof SubfamilyFiltersState>(key: K, value: SubfamilyFiltersState[K]) => void;
 };
 
 function isPeriodOption(option: string | PeriodOption): option is PeriodOption {
@@ -44,9 +44,7 @@ function FilterField({
 }) {
   const periodOptions = options.filter(isPeriodOption);
   const selectedLabel =
-    typeof options[0] === "string"
-      ? value
-      : periodOptions.find((option) => option.value === value)?.label;
+    typeof options[0] === "string" ? value : periodOptions.find((option) => option.value === value)?.label;
 
   return (
     <div className="space-y-1.5">
@@ -72,34 +70,48 @@ function FilterField({
   );
 }
 
-function FiltersCard({ filters, onFilterChange }: CommercialFiltersProps) {
+function FiltersCard({ filters, onFilterChange }: SubfamilyFiltersProps) {
+  const subfamilyOptions = getSubfamilyOptions(filters.family);
+
   return (
     <Card className="border-slate-200 bg-white shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold text-slate-950">Filtros comerciales</CardTitle>
+        <CardTitle className="text-sm font-semibold text-slate-950">Filtros de subfamilia</CardTitle>
         <CardDescription className="text-sm text-slate-500">
-          Selecciona año, periodo y origen para actualizar el resumen.
+          Selecciona año, periodo, origen, familia y subfamilia para analizar el desempeño comercial.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <FilterField
             label="Año"
             value={filters.year}
-            options={commercialFilterOptions.years}
+            options={subfamilyFilterOptions.years}
             onValueChange={(value) => onFilterChange("year", value)}
           />
           <FilterField
             label="Periodo"
             value={filters.period}
-            options={commercialFilterOptions.periods}
+            options={subfamilyFilterOptions.periods}
             onValueChange={(value) => onFilterChange("period", value)}
           />
           <FilterField
             label="Origen"
             value={filters.origin}
-            options={commercialFilterOptions.origins}
+            options={subfamilyFilterOptions.origins}
             onValueChange={(value) => onFilterChange("origin", value)}
+          />
+          <FilterField
+            label="Familia"
+            value={filters.family}
+            options={subfamilyFilterOptions.families}
+            onValueChange={(value) => onFilterChange("family", value)}
+          />
+          <FilterField
+            label="Subfamilia"
+            value={filters.subfamily}
+            options={subfamilyOptions}
+            onValueChange={(value) => onFilterChange("subfamily", value)}
           />
         </div>
       </CardContent>
@@ -107,7 +119,9 @@ function FiltersCard({ filters, onFilterChange }: CommercialFiltersProps) {
   );
 }
 
-export function CommercialFilters({ filters, onFilterChange }: CommercialFiltersProps) {
+export function SubfamilyFilters({ filters, onFilterChange }: SubfamilyFiltersProps) {
+  const subfamilyOptions = getSubfamilyOptions(filters.family);
+
   return (
     <>
       <div className="hidden lg:block">
@@ -124,29 +138,41 @@ export function CommercialFilters({ filters, onFilterChange }: CommercialFilters
           </SheetTrigger>
           <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 pt-4">
             <SheetHeader className="text-left">
-              <SheetTitle>Filtros comerciales</SheetTitle>
+              <SheetTitle>Filtros de subfamilia</SheetTitle>
               <SheetDescription>
-                Selecciona año, periodo y origen para actualizar el resumen.
+                Selecciona año, periodo, origen, familia y subfamilia para analizar el desempeño comercial.
               </SheetDescription>
             </SheetHeader>
             <div className="mt-6 grid gap-4">
               <FilterField
                 label="Año"
                 value={filters.year}
-                options={commercialFilterOptions.years}
+                options={subfamilyFilterOptions.years}
                 onValueChange={(value) => onFilterChange("year", value)}
               />
               <FilterField
                 label="Periodo"
                 value={filters.period}
-                options={commercialFilterOptions.periods}
+                options={subfamilyFilterOptions.periods}
                 onValueChange={(value) => onFilterChange("period", value)}
               />
               <FilterField
                 label="Origen"
                 value={filters.origin}
-                options={commercialFilterOptions.origins}
+                options={subfamilyFilterOptions.origins}
                 onValueChange={(value) => onFilterChange("origin", value)}
+              />
+              <FilterField
+                label="Familia"
+                value={filters.family}
+                options={subfamilyFilterOptions.families}
+                onValueChange={(value) => onFilterChange("family", value)}
+              />
+              <FilterField
+                label="Subfamilia"
+                value={filters.subfamily}
+                options={subfamilyOptions}
+                onValueChange={(value) => onFilterChange("subfamily", value)}
               />
             </div>
             <SheetFooter className="mt-6">

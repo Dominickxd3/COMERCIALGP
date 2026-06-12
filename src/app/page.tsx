@@ -17,7 +17,7 @@ import {
 export default function HomePage() {
   const [filters, setFilters] = useState<CommercialFilterState>({
     year: commercialFilterOptions.years[0],
-    period: commercialFilterOptions.periods[2],
+    period: commercialFilterOptions.periods[2].value,
     origin: commercialFilterOptions.origins[0],
     versionCut: commercialFilterOptions.versionCuts[0],
   });
@@ -55,7 +55,10 @@ export default function HomePage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,0.95fr)]">
-        <CommercialEvolutionChart data={data.monthlyData} selectedMonth={filters.period} />
+        <CommercialEvolutionChart
+          data={data.monthlyData}
+          selectedMonth={data.monthlyData.at(-1)?.mes ?? "Marzo"}
+        />
         <FamilyParticipationCard items={data.familyData} />
       </div>
 
