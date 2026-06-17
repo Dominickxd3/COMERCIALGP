@@ -15,8 +15,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Comercial GP",
-  description: "Base administrativa comercial para Grupo Pecuario",
+  title: "ComercialGP",
+  description: "Dashboard comercial",
+  icons: {
+    icon: [
+      { url: "/logo-gp.png?v=2", type: "image/png" },
+    ],
+    shortcut: ["/logo-gp.png?v=2"],
+    apple: [
+      { url: "/logo-gp.png?v=2", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

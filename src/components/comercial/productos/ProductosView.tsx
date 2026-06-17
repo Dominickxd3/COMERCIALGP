@@ -9,21 +9,26 @@ import {
   getProductAnalyticsData,
   getProductOptions,
   getSubfamilyOptions,
-  productFilterOptions,
   type ProductFiltersState,
 } from "@/components/comercial/productos/product-data";
 
 export function ProductosView({
   initialFamily,
   initialSubfamily,
+  initialYear,
+  initialPeriod,
+  initialOrigin,
 }: {
   initialFamily: string;
   initialSubfamily: string;
+  initialYear: string;
+  initialPeriod: string;
+  initialOrigin: string;
 }) {
   const [filters, setFilters] = useState<ProductFiltersState>({
-    year: productFilterOptions.years[0],
-    period: productFilterOptions.periods[2].value,
-    origin: productFilterOptions.origins[0],
+    year: initialYear,
+    period: initialPeriod,
+    origin: initialOrigin,
     family: initialFamily,
     subfamily: initialSubfamily,
     product: "Todos",

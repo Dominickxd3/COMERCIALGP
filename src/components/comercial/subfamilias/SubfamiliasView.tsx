@@ -1,23 +1,33 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { SubfamilyAnalysisSection } from "@/components/comercial/subfamilias/SubfamilyAnalysisSection";
 import { SubfamilyDetailTable } from "@/components/comercial/subfamilias/SubfamilyDetailTable";
 import { SubfamilyFilters } from "@/components/comercial/subfamilias/SubfamilyFilters";
 import { SubfamilyKpiCards } from "@/components/comercial/subfamilias/SubfamilyKpiCards";
-import { SubfamilyParticipationList } from "@/components/comercial/subfamilias/SubfamilyParticipationList";
 import { SubfamilyRankingChart } from "@/components/comercial/subfamilias/SubfamilyRankingChart";
 import {
   getSubfamilyAnalyticsData,
+  getSubfamilyDrilldownData,
   getSubfamilyOptions,
-  subfamilyFilterOptions,
   type SubfamilyFiltersState,
 } from "@/components/comercial/subfamilias/subfamily-data";
 
-export function SubfamiliasView({ initialFamily }: { initialFamily: string }) {
+export function SubfamiliasView({
+  initialFamily,
+  initialYear,
+  initialPeriod,
+  initialOrigin,
+}: {
+  initialFamily: string;
+  initialYear: string;
+  initialPeriod: string;
+  initialOrigin: string;
+}) {
   const [filters, setFilters] = useState<SubfamilyFiltersState>({
-    year: subfamilyFilterOptions.years[0],
-    period: subfamilyFilterOptions.periods[2].value,
-    origin: subfamilyFilterOptions.origins[0],
+    year: initialYear,
+    period: initialPeriod,
+    origin: initialOrigin,
     family: initialFamily,
     subfamily: "Todas",
   });
@@ -32,6 +42,18 @@ export function SubfamiliasView({ initialFamily }: { initialFamily: string }) {
   );
 
   const data = useMemo(() => getSubfamilyAnalyticsData(normalizedFilters), [normalizedFilters]);
+
+  // Selected subfamily for drilldown
+  const [selectedSubfamily, setSelectedSubfamily] = useState("Pechuga");
+  const effectiveSelectedSubfamily =
+    data.rows.some((row) => row.subfamilia === selectedSubfamily)
+      ? selectedSubfamily
+      : (data.rows[0]?.subfamilia ?? "Pechuga");
+
+  const drilldown = useMemo(
+    () => getSubfamilyDrilldownData(normalizedFilters, effectiveSelectedSubfamily),
+    [effectiveSelectedSubfamily, normalizedFilters],
+  );
 
   return (
     <section className="space-y-6 pb-6">
@@ -53,12 +75,20 @@ export function SubfamiliasView({ initialFamily }: { initialFamily: string }) {
 
       <SubfamilyKpiCards items={data.kpis} />
 
-      <div className="grid items-start gap-4 xl:grid-cols-[1.35fr_0.85fr]">
-        <SubfamilyRankingChart items={data.ranking} />
-        <SubfamilyParticipationList items={data.participation} />
-      </div>
+      <SubfamilyRankingChart
+        items={data.ranking}
+        selectedSubfamily={effectiveSelectedSubfamily}
+        onSelectSubfamily={setSelectedSubfamily}
+      />
 
-      <SubfamilyDetailTable items={data.rows} />
+      <SubfamilyAnalysisSection data={drilldown} filters={normalizedFilters} />
+
+      <SubfamilyDetailTable
+        items={data.rows}
+        filters={normalizedFilters}
+        selectedSubfamily={effectiveSelectedSubfamily}
+        onSelectSubfamily={setSelectedSubfamily}
+      />
     </section>
   );
 }

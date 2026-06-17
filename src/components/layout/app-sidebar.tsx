@@ -3,12 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Box,
   HelpCircle,
   LayoutGrid,
   LogOut,
-  Shapes,
-  Tag,
   User,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -28,9 +25,6 @@ import {
 
 const navMain = [
   { title: "Inicio", url: "/", icon: LayoutGrid },
-  { title: "Familias", url: "/familias", icon: Shapes },
-  { title: "Subfamilias", url: "/subfamilias", icon: Tag },
-  { title: "Productos", url: "/productos", icon: Box },
 ];
 
 const footerItems = [
@@ -54,7 +48,7 @@ export function AppSidebar() {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Grupo Pecuario</span>
-                  <span className="truncate text-xs text-muted-foreground">Comercial GP</span>
+                  <span className="truncate text-xs text-muted-foreground">GP</span>
                 </div>
               </Link>
             </SidebarMenuButton>

@@ -179,7 +179,210 @@ export function getSubfamilyAnalyticsData(filters: SubfamilyFiltersState) {
   return {
     rows,
     ranking: rows,
-    participation: rows,
     kpis: buildKpis(rows),
+  };
+}
+
+/* ═══════════════════════════════════════════
+   Drilldown data for selected subfamily
+   ═══════════════════════════════════════════ */
+
+export type SubfamilyOriginBreakdown = {
+  origen: string;
+  venta: number;
+  kilos: number;
+  participacion: number;
+};
+
+export type SubfamilyTopProduct = {
+  productoMarca: string;
+  venta: number;
+  kilos: number;
+};
+
+export type SubfamilyFamilyBreakdown = {
+  familia: string;
+  venta: number;
+  kilos: number;
+  participacion: number;
+};
+
+export type SubfamilyDrilldownData = {
+  summary: {
+    subfamilia: string;
+    familia: string;
+    venta: number;
+    kilos: number;
+    precioPromedio: number;
+    participacionVenta: number;
+  };
+  families: SubfamilyFamilyBreakdown[];
+  origins: SubfamilyOriginBreakdown[];
+  topProducts: SubfamilyTopProduct[];
+};
+
+export function safeDivide(numerator: number, denominator: number) {
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) return 0;
+  return numerator / denominator;
+}
+
+export function calculateAveragePricePerKg(venta: number, kilos: number) {
+  return safeDivide(venta, kilos);
+}
+
+/* ── Mock product catalog per subfamily ── */
+
+const baseProductsBySubfamily: Record<string, Array<{ productoMarca: string; ventaBase: number; kilosBase: number }>> = {
+  Pechuga: [
+    { productoMarca: "Pechuga Entera [San Fernando]", ventaBase: 420_000, kilosBase: 32_000 },
+    { productoMarca: "Pechuga Deshuesada [San Fernando]", ventaBase: 380_000, kilosBase: 28_000 },
+    { productoMarca: "Pechuga Fileteada [Redondos]", ventaBase: 310_000, kilosBase: 24_000 },
+    { productoMarca: "Pechuga Aplanada [San Fernando]", ventaBase: 260_000, kilosBase: 22_000 },
+    { productoMarca: "Pechuga Trozada [Redondos]", ventaBase: 210_000, kilosBase: 16_000 },
+  ],
+  Muslo: [
+    { productoMarca: "Muslo de Pollo [San Fernando]", ventaBase: 320_000, kilosBase: 38_000 },
+    { productoMarca: "Muslo Deshuesado [Redondos]", ventaBase: 260_000, kilosBase: 30_000 },
+    { productoMarca: "Muslo Marinado [San Fernando]", ventaBase: 220_000, kilosBase: 22_000 },
+    { productoMarca: "Muslo Especial [Redondos]", ventaBase: 190_000, kilosBase: 18_000 },
+  ],
+  Pierna: [
+    { productoMarca: "Pierna de Pollo [San Fernando]", ventaBase: 290_000, kilosBase: 34_000 },
+    { productoMarca: "Pierna Deshuesada [Redondos]", ventaBase: 240_000, kilosBase: 28_000 },
+    { productoMarca: "Pierna Especial [San Fernando]", ventaBase: 180_000, kilosBase: 20_000 },
+    { productoMarca: "Pierna Marinada [Redondos]", ventaBase: 150_000, kilosBase: 15_000 },
+  ],
+  Chuleta: [
+    { productoMarca: "Chuleta de Cerdo [San Fernando]", ventaBase: 360_000, kilosBase: 30_000 },
+    { productoMarca: "Chuleta Ahumada [La Preferida]", ventaBase: 310_000, kilosBase: 26_000 },
+    { productoMarca: "Chuleta Premium [San Fernando]", ventaBase: 250_000, kilosBase: 22_000 },
+    { productoMarca: "Chuleta Marinada [La Preferida]", ventaBase: 200_000, kilosBase: 18_000 },
+  ],
+  Costilla: [
+    { productoMarca: "Costilla de Cerdo [San Fernando]", ventaBase: 280_000, kilosBase: 24_000 },
+    { productoMarca: "Costilla BBQ [La Preferida]", ventaBase: 240_000, kilosBase: 20_000 },
+    { productoMarca: "Costilla Ahumada [San Fernando]", ventaBase: 240_000, kilosBase: 20_000 },
+  ],
+  "Pavo entero": [
+    { productoMarca: "Pavo Entero Navideño [San Fernando]", ventaBase: 380_000, kilosBase: 34_000 },
+    { productoMarca: "Pavo Entero Premium [Redondos]", ventaBase: 280_000, kilosBase: 24_000 },
+    { productoMarca: "Pavo Entero Económico [San Fernando]", ventaBase: 200_000, kilosBase: 18_000 },
+  ],
+  "Pechuga de pavo": [
+    { productoMarca: "Pechuga de Pavo [San Fernando]", ventaBase: 220_000, kilosBase: 20_000 },
+    { productoMarca: "Pechuga de Pavo Light [Redondos]", ventaBase: 200_000, kilosBase: 18_000 },
+  ],
+  Jamonada: [
+    { productoMarca: "Jamonada Clásica [San Fernando]", ventaBase: 280_000, kilosBase: 16_000 },
+    { productoMarca: "Jamonada Premium [La Preferida]", ventaBase: 220_000, kilosBase: 12_000 },
+    { productoMarca: "Jamonada Light [San Fernando]", ventaBase: 150_000, kilosBase: 8_000 },
+    { productoMarca: "Jamonada Económica [Redondos]", ventaBase: 90_000, kilosBase: 6_000 },
+  ],
+  "Hot dog": [
+    { productoMarca: "Hot Dog Clásico [San Fernando]", ventaBase: 140_000, kilosBase: 9_000 },
+    { productoMarca: "Hot Dog Premium [La Preferida]", ventaBase: 90_000, kilosBase: 5_500 },
+    { productoMarca: "Hot Dog Jumbo [Redondos]", ventaBase: 60_000, kilosBase: 3_500 },
+  ],
+  Mixtos: [
+    { productoMarca: "Mix Congelado Familiar [San Fernando]", ventaBase: 210_000, kilosBase: 16_000 },
+    { productoMarca: "Mix Congelado Premium [Redondos]", ventaBase: 160_000, kilosBase: 12_000 },
+    { productoMarca: "Mix Parrillero [San Fernando]", ventaBase: 110_000, kilosBase: 8_000 },
+  ],
+  Empanizados: [
+    { productoMarca: "Nuggets de Pollo [San Fernando]", ventaBase: 150_000, kilosBase: 11_000 },
+    { productoMarca: "Milanesa Empanizada [Redondos]", ventaBase: 110_000, kilosBase: 8_000 },
+    { productoMarca: "Deditos de Pollo [San Fernando]", ventaBase: 80_000, kilosBase: 6_000 },
+  ],
+};
+
+/* GP/TDA split ratios per subfamily */
+const originSplit: Record<string, number> = {
+  Pechuga: 0.72,
+  Muslo: 0.65,
+  Pierna: 0.60,
+  Chuleta: 0.58,
+  Costilla: 0.55,
+  "Pavo entero": 0.70,
+  "Pechuga de pavo": 0.62,
+  Jamonada: 0.50,
+  "Hot dog": 0.45,
+  Mixtos: 0.52,
+  Empanizados: 0.48,
+};
+
+export function getSubfamilyDrilldownData(
+  filters: SubfamilyFiltersState,
+  selectedSubfamily: string,
+): SubfamilyDrilldownData {
+  const allRows = buildRows(filters);
+  const totalVentaAll = allRows.reduce((s, r) => s + r.venta, 0);
+  const row = allRows.find((r) => r.subfamilia === selectedSubfamily) ?? allRows[0];
+
+  if (!row) {
+    return {
+      summary: { subfamilia: selectedSubfamily, familia: "—", venta: 0, kilos: 0, precioPromedio: 0, participacionVenta: 0 },
+      families: [],
+      origins: [],
+      topProducts: [],
+    };
+  }
+
+  const precioPromedio = safeDivide(row.venta, row.kilos);
+  const participacionVenta = safeDivide(row.venta, totalVentaAll) * 100;
+
+  // Family breakdown — each subfamily belongs to exactly one familia in current data
+  const families: SubfamilyFamilyBreakdown[] = [
+    { familia: row.familia, venta: row.venta, kilos: row.kilos, participacion: 100 },
+  ];
+
+  // Origin breakdown — GP / TDA split
+  const gpRatio = originSplit[selectedSubfamily] ?? 0.65;
+  const tdaRatio = 1 - gpRatio;
+  const periodFactor = getPeriodFactor(filters.period);
+  const origins: SubfamilyOriginBreakdown[] = filters.origin === "Todos"
+    ? [
+        {
+          origen: "GP",
+          venta: Math.round(row.venta * gpRatio),
+          kilos: Math.round(row.kilos * gpRatio),
+          participacion: gpRatio * 100,
+        },
+        {
+          origen: "TDA",
+          venta: Math.round(row.venta * tdaRatio),
+          kilos: Math.round(row.kilos * tdaRatio),
+          participacion: tdaRatio * 100,
+        },
+      ]
+    : [
+        {
+          origen: filters.origin,
+          venta: row.venta,
+          kilos: row.kilos,
+          participacion: 100,
+        },
+      ];
+
+  // Top products — scaled by period/origin factors
+  const originFactor = getOriginFactor(filters.origin);
+  const rawProducts = baseProductsBySubfamily[selectedSubfamily] ?? [];
+  const topProducts: SubfamilyTopProduct[] = rawProducts.map((p) => ({
+    productoMarca: p.productoMarca,
+    venta: Math.round(p.ventaBase * periodFactor * originFactor),
+    kilos: Math.round(p.kilosBase * periodFactor * originFactor),
+  }));
+
+  return {
+    summary: {
+      subfamilia: selectedSubfamily,
+      familia: row.familia,
+      venta: row.venta,
+      kilos: row.kilos,
+      precioPromedio,
+      participacionVenta,
+    },
+    families,
+    origins,
+    topProducts,
   };
 }

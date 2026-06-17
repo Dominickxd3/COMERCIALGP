@@ -43,7 +43,7 @@ export function AppSidebar() {
                     </div>
                     <div className="flex flex-col">
                         <span className="text-sm font-bold leading-none">Grupo Pecuario</span>
-                        <span className="text-xs text-muted-foreground mt-1">Comercial GP</span>
+                        <span className="text-xs text-muted-foreground mt-1">GP</span>
                     </div>
                 </div>
             </SidebarHeader>

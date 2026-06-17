@@ -45,6 +45,8 @@ export type FamilySubfamilyLeader = {
   subfamilia: string;
   venta: number;
   kilos: number;
+  participacionVenta?: number;
+  productos?: number;
 };
 
 export type FamilyTopProduct = {
@@ -65,6 +67,11 @@ export type FamilyDrilldownData = {
     familia: string;
     venta: number;
     kilos: number;
+    precioPromedio: number;
+    participacionVenta: number;
+    participacionKilos: number;
+    productosActivos: number;
+    subfamiliasActivas: number;
     origenPrincipal: string;
     subfamiliaLider: string;
   };
@@ -255,6 +262,18 @@ export function formatPriceKg(value: number) {
   return `S/ ${value.toFixed(2)} / kg`;
 }
 
+export function safeDivide(numerator: number, denominator: number) {
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) {
+    return 0;
+  }
+
+  return numerator / denominator;
+}
+
+export function calculateAveragePricePerKg(venta: number, kilos: number) {
+  return safeDivide(venta, kilos);
+}
+
 function getMonthIndex(period: string) {
   return Math.max(0, familyFilterOptions.periods.findIndex((option) => option.value === period));
 }
@@ -287,7 +306,7 @@ function buildRows(filters: FamilyFiltersState) {
       venta,
       kilos,
       unidades,
-      precioPromedio: venta / Math.max(kilos, 1),
+      precioPromedio: calculateAveragePricePerKg(venta, kilos),
       participacionVenta: 0,
       participacionKilos: 0,
     };
@@ -310,16 +329,17 @@ function buildKpis(rows: FamilyMetricRow[]): FamilyKpi[] {
   const totalVenta = rows.reduce((sum, item) => sum + item.venta, 0);
   const totalKilos = rows.reduce((sum, item) => sum + item.kilos, 0);
   const totalUnits = rows.reduce((sum, item) => sum + item.unidades, 0);
-  const averagePrice = totalVenta / Math.max(totalKilos, 1);
   const activeFamilies = rows.length;
+  const activeProducts = rows.reduce((sum, item) => sum + item.productos, 0);
 
   return [
     { title: "Venta Total", value: formatCurrencyCompact(totalVenta), delta: "+4.2%", helper: "Venta acumulada del filtro actual" },
     { title: "Kilos Vendidos", value: formatKilosCompact(totalKilos), delta: "+3.6%", helper: "Volumen comercial por familia" },
-    { title: "Precio Promedio Kg", value: formatPriceKg(averagePrice), delta: "+1.1%", helper: "Relación venta sobre kilos" },
     { title: "Familias Activas", value: formatUnitsCompact(activeFamilies), delta: totalUnits > 0 ? "+0.0%" : "0.0%", helper: "Familias con venta en el periodo" },
+    { title: "Productos Activos", value: formatUnitsCompact(activeProducts), delta: "+2.4%", helper: "Productos con venta en el periodo" },
   ];
 }
+
 
 export function getFamilyAnalyticsData(filters: FamilyFiltersState) {
   const rows = buildRows(filters);
@@ -353,6 +373,7 @@ export function getFamilyDrilldownData(filters: FamilyFiltersState, selectedFami
     ...item,
     venta: scaleValue(item.venta, periodFactor, originFactor),
     kilos: scaleValue(item.kilos, periodFactor, originFactor),
+    participacionVenta: selectedRow.venta ? (scaleValue(item.venta, periodFactor, originFactor) / selectedRow.venta) * 100 : 0,
   }));
 
   const topProducts = (familyTopProductsSource[selectedFamily] ?? familyTopProductsSource.Pollo).map((item) => ({
@@ -381,6 +402,11 @@ export function getFamilyDrilldownData(filters: FamilyFiltersState, selectedFami
       familia: selectedRow.familia,
       venta: selectedRow.venta,
       kilos: selectedRow.kilos,
+      precioPromedio: calculateAveragePricePerKg(selectedRow.venta, selectedRow.kilos),
+      participacionVenta: selectedRow.participacionVenta,
+      participacionKilos: selectedRow.participacionKilos,
+      productosActivos: selectedRow.productos,
+      subfamiliasActivas: selectedRow.subfamilias,
       origenPrincipal,
       subfamiliaLider: topSubfamilies[0]?.subfamilia ?? "Pechuga",
     },
