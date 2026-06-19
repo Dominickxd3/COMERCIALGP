@@ -1,7 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, DollarSign, Weight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
+  Loader2,
+  RefreshCw,
+  Weight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -9,290 +17,85 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHeaderActions } from "@/components/layout/header-actions-context";
 import { FamilyPieChart, formatVolume } from "@/components/comercial/FamilyPieChart";
+import { getDefaultCommercialFilters } from "@/lib/comercial-default-filters";
 
-/* ═══════════════════════════════════════════════════════════════
-   Data model — mirrors SQL Server commercial table structure
-   ═══════════════════════════════════════════════════════════════ */
-
-type CommercialRow = {
-  periodo: string;       // YYYYMM
-  fecha: string;         // YYYYMMDD — version/cut date
-  swUltVersion: boolean; // true = latest version for this period
-  sworigen: string;      // "GP" | "TDA"
-  familia: string;       // Product family
-  subfamilia: string;    // Product subfamily
-  producto: string;      // Product name
-  venVal: number;        // VEN_VAL
-  venKgs: number;        // VEN_KGS
-};
-
-const commercialData: CommercialRow[] = (() => {
-  const rows: CommercialRow[] = [];
-  const monthlyBase = [
-    { periodo: "202601", ventaGP: 1_428_000, ventaTDA: 672_000, kilosGP: 170_000, kilosTDA: 80_000 },
-    { periodo: "202602", ventaGP: 1_734_000, ventaTDA: 816_000, kilosGP: 190_400, kilosTDA: 89_600 },
-    { periodo: "202603", ventaGP: 2_264_400, ventaTDA: 1_065_600, kilosGP: 212_160, kilosTDA: 99_840 },
-    { periodo: "202604", ventaGP: 2_556_800, ventaTDA: 1_203_200, kilosGP: 270_640, kilosTDA: 127_360 },
-    { periodo: "202605", ventaGP: 2_910_400, ventaTDA: 1_369_600, kilosGP: 289_000, kilosTDA: 136_000 },
-    { periodo: "202606", ventaGP: 2_801_600, ventaTDA: 1_318_400, kilosGP: 279_480, kilosTDA: 131_520 },
-  ];
-
-  // Distribute sales and kilos by family:
-  // Sales: Pollo (40%), Cerdo (25%), Pavo (15%), Embutidos (10%), Congelados (6%), Huevos (3%), Alimentos (1%)
-  // Kilos: Pollo (42%), Cerdo (20%), Pavo (13%), Congelados (12%), Embutidos (7%), Huevos (4%), Alimentos (2%)
-  const families = [
-    { name: "Pollo", salesPct: 0.40, kilosPct: 0.42 },
-    { name: "Cerdo", salesPct: 0.25, kilosPct: 0.20 },
-    { name: "Pavo", salesPct: 0.15, kilosPct: 0.13 },
-    { name: "Embutidos", salesPct: 0.10, kilosPct: 0.07 },
-    { name: "Congelados", salesPct: 0.06, kilosPct: 0.12 },
-    { name: "Huevos", salesPct: 0.03, kilosPct: 0.04 },
-    { name: "Alimentos", salesPct: 0.01, kilosPct: 0.02 },
-  ];
-
-  const familySubfamilies: Record<string, string[]> = {
-    Pollo: ["Pechuga", "Pierna", "Entero", "Ala", "Menudencia"],
-    Cerdo: ["Chuleta", "Costilla", "Lomo", "Panceta", "Bondiola"],
-    Pavo: ["Pavo entero", "Pechuga de pavo", "Pavita trozada", "Jamón pavo", "Tocino pavo"],
-    Embutidos: ["Jamonada", "Hot dog", "Salchicha", "Chorizo", "Salchichón"],
-    Congelados: ["Mixtos", "Empanizados", "Papas", "Hamburguesas", "Enrollado"],
-    Huevos: ["Pardos", "Blancos", "Orgánicos", "Codorniz", "Claras"],
-    Alimentos: ["Pollo balanceado", "Cerdo balanceado", "Pavo balanceado", "Suplemento", "Premezcla"],
-  };
-
-  const productPcts = [0.42, 0.28, 0.18, 0.08, 0.04];
-
-  for (const mb of monthlyBase) {
-    const year = parseInt(mb.periodo.slice(0, 4), 10);
-    const month = parseInt(mb.periodo.slice(4), 10);
-    const lastDay = new Date(year, month, 0).getDate();
-    const versionDates = [
-      { day: 15, factor: 0.92 },
-      { day: lastDay, factor: 1.0 },
-    ];
-    if (month >= 5) {
-      versionDates.splice(1, 0, { day: 22, factor: 0.97 });
-    }
-
-    versionDates.forEach((v, idx) => {
-      const isLast = idx === versionDates.length - 1;
-      const dd = String(v.day).padStart(2, "0");
-      const mm = String(month).padStart(2, "0");
-      const fecha = `${year}${mm}${dd}`;
-
-      families.forEach((fam) => {
-        const subfams = familySubfamilies[fam.name] || ["Genérico"];
-        subfams.forEach((subName, sIdx) => {
-          const pct = productPcts[sIdx] ?? 0.05;
-          rows.push({
-            periodo: mb.periodo,
-            fecha,
-            swUltVersion: isLast,
-            sworigen: "GP",
-            familia: fam.name,
-            subfamilia: subName,
-            producto: `${subName} producto`,
-            venVal: Math.round(mb.ventaGP * v.factor * fam.salesPct * pct),
-            venKgs: Math.round(mb.kilosGP * v.factor * fam.kilosPct * pct),
-          });
-          rows.push({
-            periodo: mb.periodo,
-            fecha,
-            swUltVersion: isLast,
-            sworigen: "TDA",
-            familia: fam.name,
-            subfamilia: subName,
-            producto: `${subName} producto`,
-            venVal: Math.round(mb.ventaTDA * v.factor * fam.salesPct * pct),
-            venKgs: Math.round(mb.kilosTDA * v.factor * fam.kilosPct * pct),
-          });
-        });
-      });
-    });
-  }
-  return rows;
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   Helpers
-   ═══════════════════════════════════════════════════════════════ */
-
-function fmtCurrency(v: number) {
-  if (v >= 1_000_000) return `S/ ${(v / 1_000_000).toFixed(2)}M`;
-  if (v >= 1_000) return `S/ ${Math.round(v / 1_000)}K`;
-  return `S/ ${v.toFixed(0)}`;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Filter types and options
-   ═══════════════════════════════════════════════════════════════ */
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type DashboardFilters = {
   year: string;
   mes: string;
   semana: string;
   version: string;
+  origin: string;
 };
 
-function getWeekNumber(dateStr: string): number {
-  if (dateStr.length !== 8) return 0;
-  const y = parseInt(dateStr.slice(0, 4), 10);
-  const m = parseInt(dateStr.slice(4, 6), 10) - 1;
-  const d = parseInt(dateStr.slice(6, 8), 10);
-  const date = new Date(y, m, d);
-  const oneJan = new Date(y, 0, 1);
-  const numberOfDays = Math.floor((date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000));
-  return Math.ceil((numberOfDays + oneJan.getDay() + 1) / 7);
-}
+type DashboardResponse = {
+  kpis: {
+    totalKilos: number;
+    totalToneladas: number;
+    totalVenta: number;
+  };
+  families: Array<{
+    name: string;
+    kilos: number;
+    toneladas: number;
+    percentage: number;
+  }>;
+  products: Array<{
+    name: string;
+    kilos: number;
+    toneladas: number;
+  }>;
+  options: {
+    years: string[];
+    periods: string[];
+    weeks: string[];
+    dates: string[];
+    origins: string[];
+  };
+  resolvedFilters: {
+    year: string;
+    period: string;
+    week: string;
+    date: string;
+    businessDate: string;
+    origin: string;
+    family: string;
+  };
+};
 
-function getAvailableYears(): string[] {
-  const years = new Set(commercialData.map((r) => r.periodo.slice(0, 4)));
-  return Array.from(years).sort();
-}
-
-function getAvailableMonths(year: string): string[] {
-  const months = new Set(
-    commercialData
-      .filter((r) => r.periodo.slice(0, 4) === year)
-      .map((r) => r.periodo.slice(4, 6))
-  );
-  return Array.from(months).sort();
-}
-
-function getAvailableWeeks(year: string, mes: string): number[] {
-  const filtered = commercialData.filter((r) => {
-    const rYear = r.periodo.slice(0, 4);
-    if (rYear !== year) return false;
-    if (mes !== "Todos" && r.periodo.slice(4, 6) !== mes) return false;
-    return true;
-  });
-  
-  const weeks = new Set<number>();
-  for (const r of filtered) {
-    weeks.add(getWeekNumber(r.fecha));
-  }
-  return Array.from(weeks).sort((a, b) => a - b);
-}
-
-function getAvailableDates(year: string, mes: string, semana: string): string[] {
-  const filtered = commercialData.filter((r) => {
-    const rYear = r.periodo.slice(0, 4);
-    if (rYear !== year) return false;
-    if (mes !== "Todos" && r.periodo.slice(4, 6) !== mes) return false;
-    if (semana !== "Todas" && getWeekNumber(r.fecha) !== parseInt(semana, 10)) return false;
-    return true;
-  });
-  
-  const dates = new Set(filtered.map((r) => r.fecha));
-  return Array.from(dates).sort();
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   KPI calculation
-   ═══════════════════════════════════════════════════════════════ */
-
-function getKpiData(filters: DashboardFilters) {
-  let filtered: CommercialRow[];
-
-  // 1. Filter by year
-  filtered = commercialData.filter((r) => r.periodo.slice(0, 4) === filters.year);
-
-  // 2. Filter by month/mes
-  if (filters.mes !== "Todos") {
-    filtered = filtered.filter((r) => r.periodo.slice(4, 6) === filters.mes);
-  }
-
-  // 3. Filter by semana/version
-  if (filters.semana !== "Todas") {
-    // Show only that specific week
-    const targetWeek = parseInt(filters.semana, 10);
-    filtered = filtered.filter((r) => getWeekNumber(r.fecha) === targetWeek);
-  } else {
-    // Semana = Todas: show cumulative data up to the selected version/fecha
-    if (filters.version) {
-      const targetMonthStr = filters.version.slice(4, 6);
-      const targetMonth = parseInt(targetMonthStr, 10);
-      
-      const periods = new Set(filtered.map((r) => r.periodo));
-      const finalRows: CommercialRow[] = [];
-      for (const p of periods) {
-        const rMonth = parseInt(p.slice(4, 6), 10);
-        if (rMonth < targetMonth) {
-          // Past months: take latest version
-          const periodRows = filtered.filter((r) => r.periodo === p);
-          const ultRows = periodRows.filter((r) => r.swUltVersion);
-          finalRows.push(...(ultRows.length > 0 ? ultRows : periodRows));
-        } else if (rMonth === targetMonth) {
-          // Selected month: take the specific selected version date
-          const periodRows = filtered.filter((r) => r.periodo === p && r.fecha === filters.version);
-          finalRows.push(...periodRows);
-        }
-        // Future months are excluded
-      }
-      filtered = finalRows;
-    } else {
-      // Fallback
-      const periods = new Set(filtered.map((r) => r.periodo));
-      const finalRows: CommercialRow[] = [];
-      for (const p of periods) {
-        const periodRows = filtered.filter((r) => r.periodo === p);
-        const ultRows = periodRows.filter((r) => r.swUltVersion);
-        finalRows.push(...(ultRows.length > 0 ? ultRows : periodRows));
-      }
-      filtered = finalRows;
-    }
-  }
-
-  const totalVenta = filtered.reduce((s, r) => s + r.venVal, 0);
-  const totalKilos = filtered.reduce((s, r) => s + r.venKgs, 0);
-  return { totalVenta, totalKilos, hasData: filtered.length > 0, filteredRows: filtered };
-}
+type RefreshResponse = {
+  ok: boolean;
+  executedRefresh: boolean;
+  periodo: string;
+  fecha: string;
+  rowsAfterRefresh: number;
+  warning: string | null;
+  kpis: DashboardResponse["kpis"];
+  families: DashboardResponse["families"];
+  products: DashboardResponse["products"];
+  options: DashboardResponse["options"];
+  resolvedFilters: DashboardResponse["resolvedFilters"];
+  error?: string;
+};
 
 type PieChartItem = {
   name: string;
   value: number;
   percentage: number;
+  isOther?: boolean;
+  children?: Array<{
+    name: string;
+    value: number;
+    percentage: number;
+  }>;
 };
-
-function getPieChartData(filteredRows: CommercialRow[], type: "sales" | "kilos"): PieChartItem[] {
-  const total = filteredRows.reduce((s, r) => s + (type === "sales" ? r.venVal : r.venKgs), 0);
-  if (total === 0) return [];
-
-  // Group by family
-  const groups: Record<string, number> = {};
-  for (const r of filteredRows) {
-    groups[r.familia] = (groups[r.familia] ?? 0) + (type === "sales" ? r.venVal : r.venKgs);
-  }
-
-  // Convert to array
-  const list = Object.entries(groups).map(([name, val]) => ({ name, value: val }));
-
-  // Sort descending
-  list.sort((a, b) => b.value - a.value);
-
-  // Take top 4 and combine the rest as "Otros"
-  const top4 = list.slice(0, 4);
-  const rest = list.slice(4);
-
-  const result: Array<{ name: string; value: number }> = [...top4];
-  if (rest.length > 0) {
-    const otrosValue = rest.reduce((s, item) => s + item.value, 0);
-    result.push({ name: "Otros", value: otrosValue });
-  }
-
-  // Calculate percentages
-  return result.map((item) => ({
-    ...item,
-    percentage: (item.value / total) * 100,
-  }));
-}
 
 type ProductItem = {
   name: string;
@@ -300,184 +103,215 @@ type ProductItem = {
   percentage: number;
 };
 
-function getProductPieData(filteredRows: CommercialRow[], selectedFamily: string): ProductItem[] {
-  const rows = filteredRows.filter((r) => r.familia === selectedFamily);
-  const total = rows.reduce((s, r) => s + r.venKgs, 0);
-  if (total === 0) return [];
+/**
+ * State machine for a single data fetch:
+ *   idle     → never fetched
+ *   loading  → request in-flight (show stale data + spinner)
+ *   success  → data available
+ *   empty    → request done, zero rows
+ *   error    → request failed
+ */
+type FetchStatus = "idle" | "loading" | "success" | "empty" | "error";
 
-  const groups: Record<string, number> = {};
-  for (const r of rows) {
-    groups[r.producto] = (groups[r.producto] ?? 0) + r.venKgs;
-  }
-
-  const list = Object.entries(groups).map(([name, val]) => ({ name, value: val }));
-
-  list.sort((a, b) => b.value - a.value);
-
-  const top5 = list.slice(0, 5);
-
-  return top5.map((item) => ({
-    name: item.name,
-    value: item.value,
-    percentage: (item.value / total) * 100,
-  }));
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Period context label from applied filters
-   ═══════════════════════════════════════════════════════════════ */
-
-// getPeriodContext removed since context labels are no longer used
-
-/* ═══════════════════════════════════════════════════════════════
-   Header action buttons
-   ═══════════════════════════════════════════════════════════════ */
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const MONTH_NAMES: Record<string, string> = {
-  "01": "Enero",
-  "02": "Febrero",
-  "03": "Marzo",
-  "04": "Abril",
-  "05": "Mayo",
-  "06": "Junio",
-  "07": "Julio",
-  "08": "Agosto",
-  "09": "Septiembre",
-  "10": "Octubre",
-  "11": "Noviembre",
-  "12": "Diciembre",
+  "01": "Enero",   "02": "Febrero", "03": "Marzo",
+  "04": "Abril",   "05": "Mayo",    "06": "Junio",
+  "07": "Julio",   "08": "Agosto",  "09": "Septiembre",
+  "10": "Octubre", "11": "Noviembre","12": "Diciembre",
 };
 
-function formatFechaDmy(f: string): string {
-  if (!f || f.length !== 8) return f;
-  return `${f.slice(6)}/${f.slice(4, 6)}/${f.slice(0, 4)}`;
+const SHORT_MONTH_NAMES: Record<string, string> = {
+  "01": "Ene.", "02": "Feb.", "03": "Mar.", "04": "Abr.",
+  "05": "May.", "06": "Jun.", "07": "Jul.", "08": "Ago.",
+  "09": "Set.", "10": "Oct.", "11": "Nov.", "12": "Dic.",
+};
+
+const MOBILE_MONTH_NAMES: Record<string, string> = {
+  "01": "Ene", "02": "Feb", "03": "Mar", "04": "Abr",
+  "05": "May", "06": "Jun", "07": "Jul", "08": "Ago",
+  "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dic",
+};
+
+const WEEKDAYS = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fmtCurrency(value: number) {
+  if (value >= 1_000_000) return `S/ ${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `S/ ${Math.round(value / 1_000)}K`;
+  return `S/ ${value.toFixed(0)}`;
 }
 
-function parseYyyymmdd(str: string): Date {
-  if (!str || str.length !== 8) return new Date();
-  const y = parseInt(str.slice(0, 4), 10);
-  const m = parseInt(str.slice(4, 6), 10) - 1;
-  const d = parseInt(str.slice(6, 8), 10);
-  return new Date(y, m, d);
+function parseYyyymmdd(value: string) {
+  if (!/^\d{8}$/.test(value)) return new Date();
+  return new Date(
+    Number(value.slice(0, 4)),
+    Number(value.slice(4, 6)) - 1,
+    Number(value.slice(6, 8)),
+  );
 }
 
-const MONTHS_SPANISH = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-];
+/** Unique stable cache key for a set of filters */
+function cacheKey(f: DashboardFilters) {
+  return `${f.year}|${f.mes}|${f.semana}|${f.origin}`;
+}
 
-const WEEKDAYS = ["DO", "LU", "MA", "MI", "JU", "VI", "SA"];
+/** Fetch wrapper that throws on non-ok */
+async function fetchJson<T>(input: RequestInfo, init?: RequestInit) {
+  const response = await fetch(input, init);
+  const payload = (await response.json()) as T & { error?: string };
+  if (!response.ok) throw new Error(payload.error ?? "Request failed.");
+  return payload;
+}
+
+/**
+ * Resolves the best initial period (year + mes) for the first load:
+ *   1. Current year/month if that periodo exists in the available periods
+ *   2. Otherwise whatever the API resolved (latest available)
+ */
+function resolveInitialPeriod(
+  resolvedYear: string,
+  resolvedPeriod: string,
+  availablePeriods: string[],
+  defaults: ReturnType<typeof getDefaultCommercialFilters>,
+): { year: string; mes: string } {
+  // API already resolved to the current year/month → keep it
+  if (resolvedYear === defaults.year && resolvedPeriod === defaults.month) {
+    return { year: resolvedYear, mes: resolvedPeriod };
+  }
+
+  // Current month exists in DB for the current year → prefer it
+  const currentPeriodoExists = availablePeriods.includes(defaults.month);
+  if (resolvedYear === defaults.year && currentPeriodoExists) {
+    return { year: defaults.year, mes: defaults.month };
+  }
+
+  // Fallback: what the API resolved (latest available)
+  return { year: resolvedYear, mes: resolvedPeriod };
+}
+
+/**
+ * Resolves the best initial week for the first load.
+ *
+ * Rules (only applied during isInit — never overwrites manual selection):
+ *   1. If the selected period is the current year+month:
+ *      a. Use the current ISO week if it exists in availableWeeks
+ *      b. Otherwise use the last available week
+ *      c. Otherwise use "Todas"
+ *   2. If the selected period is NOT the current year+month:
+ *      → use "Todas" (don't force a week on historical periods)
+ */
+function resolveInitialWeek(
+  resolvedYear: string,
+  resolvedMes: string,
+  availableWeeks: string[],
+  defaults: ReturnType<typeof getDefaultCommercialFilters>,
+): string {
+  const isCurrentPeriod =
+    resolvedYear === defaults.year && resolvedMes === defaults.month;
+
+  if (!isCurrentPeriod || availableWeeks.length === 0) {
+    return "Todas";
+  }
+
+  // Prefer the current ISO week if it exists in the available weeks
+  if (availableWeeks.includes(defaults.week)) {
+    return defaults.week;
+  }
+
+  // Fall back to the last available week in the period
+  return availableWeeks.at(-1) ?? "Todas";
+}
+
+// ─── CalendarPicker ───────────────────────────────────────────────────────────
 
 function CalendarPicker({
   value,
+  availableDates,
   onChange,
 }: {
-  value: string; // YYYYMMDD
-  onChange: (value: string) => void;
+  value: string;
+  availableDates: string[];
+  onChange: (nextDate: string) => void;
 }) {
-  const [prevValue, setPrevValue] = useState(value);
-  const [navDate, setNavDate] = useState(() => parseYyyymmdd(value));
+  const selectedDate = useMemo(() => parseYyyymmdd(value), [value]);
+  const [navYear, setNavYear] = useState(selectedDate.getFullYear());
+  const [navMonth, setNavMonth] = useState(String(selectedDate.getMonth() + 1).padStart(2, "0"));
+  const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
 
-  if (value !== prevValue) {
-    setPrevValue(value);
-    setNavDate(parseYyyymmdd(value));
-  }
-
-  const navYear = navDate.getFullYear();
-  const navMonth = navDate.getMonth();
-
-  const handlePrevMonth = () => {
-    setNavDate(new Date(navYear, navMonth - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setNavDate(new Date(navYear, navMonth + 1, 1));
-  };
+  const monthStart = new Date(navYear, Number(navMonth) - 1, 1);
+  const monthEnd = new Date(navYear, Number(navMonth), 0);
+  const startWeekday = (monthStart.getDay() + 6) % 7;
+  const totalDays = monthEnd.getDate();
 
   const daysGrid = useMemo(() => {
-    const firstDayIndex = new Date(navYear, navMonth, 1).getDay();
-    const totalDays = new Date(navYear, navMonth + 1, 0).getDate();
-    
-    const grid: Array<{ day: number | null; dateStr: string | null }> = [];
-    
-    // Add empty spots for days of the week before the 1st
-    for (let i = 0; i < firstDayIndex; i++) {
-      grid.push({ day: null, dateStr: null });
+    const cells: Array<{ day: number | null; dateStr: string }> = [];
+    for (let i = 0; i < startWeekday; i++) cells.push({ day: null, dateStr: "" });
+    for (let day = 1; day <= totalDays; day++) {
+      const month = String(Number(navMonth)).padStart(2, "0");
+      cells.push({ day, dateStr: `${navYear}${month}${String(day).padStart(2, "0")}` });
     }
-    
-    // Add the days of the month
-    for (let d = 1; d <= totalDays; d++) {
-      const mm = String(navMonth + 1).padStart(2, "0");
-      const dd = String(d).padStart(2, "0");
-      grid.push({
-        day: d,
-        dateStr: `${navYear}${mm}${dd}`,
-      });
-    }
-    
-    return grid;
-  }, [navYear, navMonth]);
+    return cells;
+  }, [navMonth, navYear, startWeekday, totalDays]);
 
-  const isSelected = (dateStr: string | null) => {
-    return dateStr === value;
+  const handlePrevMonth = () => {
+    const prev = new Date(navYear, Number(navMonth) - 2, 1);
+    setNavYear(prev.getFullYear());
+    setNavMonth(String(prev.getMonth() + 1).padStart(2, "0"));
   };
-
-  const handleDayClick = (dateStr: string | null) => {
-    if (dateStr) {
-      onChange(dateStr);
-    }
+  const handleNextMonth = () => {
+    const next = new Date(navYear, Number(navMonth), 1);
+    setNavYear(next.getFullYear());
+    setNavMonth(String(next.getMonth() + 1).padStart(2, "0"));
   };
 
   return (
-    <div className="w-[250px] select-none text-slate-800">
-      {/* Header with Mes/Año and navigation */}
-      <div className="flex items-center justify-between pb-3">
+    <div className="w-full max-w-[260px] rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="mb-3 flex items-center justify-between">
         <button
           onClick={handlePrevMonth}
           type="button"
-          className="h-7 w-7 flex items-center justify-center rounded-md border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer"
+          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="text-xs font-bold text-slate-800">
-          {MONTHS_SPANISH[navMonth]} {navYear}
+          {MONTH_NAMES[navMonth]} {navYear}
         </div>
         <button
           onClick={handleNextMonth}
           type="button"
-          className="h-7 w-7 flex items-center justify-center rounded-md border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer"
+          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Weekdays headers */}
-      <div className="grid grid-cols-7 gap-1 text-center pb-2">
+      <div className="grid grid-cols-7 gap-1 pb-2 text-center">
         {WEEKDAYS.map((day) => (
-          <div key={day} className="text-[10px] font-bold text-slate-400">
-            {day}
-          </div>
+          <div key={day} className="text-[10px] font-bold text-slate-400">{day}</div>
         ))}
       </div>
 
-      {/* Days grid */}
       <div className="grid grid-cols-7 gap-1">
-        {daysGrid.map((cell, idx) => {
-          if (!cell.day) {
-            return <div key={`empty-${idx}`} className="h-7 w-7" />;
-          }
-
-          const selected = isSelected(cell.dateStr);
-
+        {daysGrid.map((cell, index) => {
+          if (!cell.day) return <div key={`empty-${index}`} className="h-7 w-7" />;
+          const isSelected = value === cell.dateStr;
+          const isAvailable = availableDateSet.has(cell.dateStr);
           return (
             <button
               key={cell.dateStr}
               type="button"
-              onClick={() => handleDayClick(cell.dateStr)}
-              className={`h-7 w-7 rounded-md text-xs font-semibold transition-colors flex items-center justify-center cursor-pointer ${
-                selected
-                  ? "bg-slate-900 text-slate-50 hover:bg-slate-900"
-                  : "text-slate-700 hover:bg-slate-50"
+              disabled={!isAvailable}
+              onClick={() => onChange(cell.dateStr)}
+              className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold transition-colors ${
+                isSelected
+                  ? "cursor-pointer bg-slate-900 text-slate-50"
+                  : isAvailable
+                    ? "cursor-pointer text-slate-700 hover:bg-slate-50"
+                    : "cursor-not-allowed text-slate-300"
               }`}
             >
               {cell.day}
@@ -489,285 +323,641 @@ function CalendarPicker({
   );
 }
 
+// ─── HeaderActions ─────────────────────────────────────────────────────────────
+
 function HeaderActions({
   draft,
   onDraftChange,
-  onApply,
+  onRefresh,
   availableYears,
+  availableMonths,
+  availableWeeks,
+  availableOrigins,
+  currentDate,
   isRefreshing,
+  isLoading,
+  isMobile,
 }: {
   draft: DashboardFilters;
   onDraftChange: (patch: Partial<DashboardFilters>) => void;
-  onApply: () => void;
+  onRefresh: () => void;
   availableYears: string[];
+  availableMonths: string[];
+  availableWeeks: string[];
+  availableOrigins: string[];
+  currentDate: string;
   isRefreshing: boolean;
+  isLoading: boolean;
+  isMobile: boolean;
 }) {
-  const availableMonths = useMemo(() => {
-    return getAvailableMonths(draft.year);
-  }, [draft.year]);
+  const selectedMonthLabel = isMobile
+    ? (!draft.mes ? "Mes" : draft.mes === "Todos" ? "Todos" : (MOBILE_MONTH_NAMES[draft.mes] ?? draft.mes))
+    : (!draft.mes ? "Mes" : draft.mes === "Todos" ? "Mes: Todos" : `Mes: ${SHORT_MONTH_NAMES[draft.mes] ?? draft.mes}`);
+  const selectedWeekLabel = isMobile
+    ? (!draft.semana ? "Sem." : draft.semana === "Todas" ? "Todas" : `S${draft.semana}`)
+    : (!draft.semana ? "Semana" : draft.semana === "Todas" ? "Sem. Todas" : `Sem. ${draft.semana}`);
 
-  const availableWeeks = useMemo(() => {
-    return getAvailableWeeks(draft.year, draft.mes);
-  }, [draft.year, draft.mes]);
-
-  const handleYearChange = (y: string) => {
-    const months = getAvailableMonths(y);
-    const hasCurrentMonth = draft.mes === "Todos" || months.includes(draft.mes);
-    const nextMonth = hasCurrentMonth ? draft.mes : "Todos";
-    
-    const wks = getAvailableWeeks(y, nextMonth);
-    const hasCurrentWeek = draft.semana === "Todas" || wks.includes(parseInt(draft.semana, 10));
-    const nextWeek = hasCurrentWeek ? draft.semana : "Todas";
-
-    onDraftChange({
-      year: y,
-      mes: nextMonth,
-      semana: nextWeek,
-    });
-  };
-
-  const handleMonthChange = (m: string) => {
-    const wks = getAvailableWeeks(draft.year, m);
-    const hasCurrentWeek = draft.semana === "Todas" || wks.includes(parseInt(draft.semana, 10));
-    onDraftChange({
-      mes: m,
-      semana: hasCurrentWeek ? draft.semana : "Todas",
-    });
-  };
-
-  const isSemanaDisabled = availableWeeks.length === 0;
+  const busy = isRefreshing || isLoading;
 
   return (
-    <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-2">
-      {/* Logo GP (botón de actualización de datos) */}
-      <button
-        onClick={onApply}
-        disabled={isRefreshing}
-        aria-label="Actualizar datos"
-        className={`flex h-9 w-9 items-center justify-center bg-transparent border-0 p-0 shadow-none outline-none shrink-0 transition-all ${
-          isRefreshing ? "opacity-50 cursor-not-allowed" : "hover:opacity-80 active:scale-95 cursor-pointer"
-        }`}
-      >
-        <img
-          src="/logo-gp.png"
-          className={`h-[34px] w-[34px] object-contain ${isRefreshing ? "animate-pulse" : ""}`}
-          alt="GP"
-        />
-      </button>
+    <div className="flex w-full items-center justify-between gap-2 py-1 md:w-auto md:justify-end">
+      {/* Logo container */}
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+        {isLoading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+        ) : (
+          <img src="/logo-gp.png" className="h-[26px] w-[26px] object-contain" alt="GP" />
+        )}
+      </div>
 
-      {/* Selectores agrupados */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
+      {/* Selects container (Horizontal scrollable only for filters) */}
+      <div className="no-scrollbar flex flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto sm:gap-2 md:flex-none">
         {/* Año */}
-        <Select value={draft.year} onValueChange={handleYearChange}>
-          <SelectTrigger className="h-8 w-[66px] sm:w-[76px] rounded-lg text-xs px-1.5 bg-slate-50 border-slate-200 font-semibold text-slate-700">
-            <SelectValue />
+        <Select
+          value={draft.year}
+          onValueChange={(year) => onDraftChange({ year, mes: "Todos", semana: "Todas", version: currentDate })}
+          disabled={busy}
+        >
+          <SelectTrigger
+            className="h-10 w-[76px] shrink-0 rounded-lg border-slate-200 bg-slate-50 px-2 text-xs font-semibold text-slate-700 md:w-[94px]"
+            aria-label="Año"
+          >
+            <span className="truncate">{draft.year || "Año"}</span>
           </SelectTrigger>
-          <SelectContent>
-            {availableYears.map((y) => (
-              <SelectItem key={y} value={y}>{y}</SelectItem>
+          <SelectContent position="popper" className="z-50">
+            {availableYears.map((year) => (
+              <SelectItem key={year} value={year}>{year}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        {/* Periodo */}
-        <Select value={draft.mes} onValueChange={handleMonthChange}>
-          <SelectTrigger className="h-8 w-[92px] sm:w-[110px] rounded-lg text-xs px-1.5 bg-slate-50 border-slate-200 font-semibold text-slate-700">
-            <SelectValue />
+        {/* Mes */}
+        <Select
+          value={draft.mes}
+          onValueChange={(mes) => onDraftChange({ mes, semana: "Todas", version: currentDate })}
+          disabled={busy}
+        >
+          <SelectTrigger
+            className="h-10 w-[68px] shrink-0 rounded-lg border-slate-200 bg-slate-50 px-2 text-xs font-semibold text-slate-700 md:w-[118px]"
+            aria-label="Mes"
+          >
+            <span className="truncate">{selectedMonthLabel}</span>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="z-50">
             <SelectItem value="Todos">Todos</SelectItem>
-            {availableMonths.map((m) => (
-              <SelectItem key={m} value={m}>
-                {MONTH_NAMES[m] ?? m}
-              </SelectItem>
+            {availableMonths.map((month) => (
+              <SelectItem key={month} value={month}>{MONTH_NAMES[month] ?? month}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         {/* Semana */}
         <Select
-          value={isSemanaDisabled ? "" : draft.semana}
-          onValueChange={(w) => onDraftChange({ semana: w })}
-          disabled={isSemanaDisabled}
+          value={draft.semana}
+          onValueChange={(semana) => onDraftChange({ semana, version: currentDate })}
+          disabled={busy || draft.mes === "Todos" || availableWeeks.length === 0}
         >
-          <SelectTrigger className="h-8 w-[88px] sm:w-[105px] rounded-lg text-xs px-1.5 bg-slate-50 border-slate-200 font-semibold text-slate-700">
-            <SelectValue placeholder="Semana" />
+          <SelectTrigger
+            className="h-10 w-[68px] shrink-0 rounded-lg border-slate-200 bg-slate-50 px-2 text-xs font-semibold text-slate-700 md:w-[98px]"
+            aria-label={availableWeeks.length === 0 ? "Sin semanas disponibles" : "Semana"}
+          >
+            <span className="truncate">{selectedWeekLabel}</span>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="z-50">
             <SelectItem value="Todas">Todas</SelectItem>
-            {availableWeeks.map((w) => (
-              <SelectItem key={w} value={String(w)}>Semana {w}</SelectItem>
+            {availableWeeks.map((week) => (
+              <SelectItem key={week} value={week}>{`Sem. ${week}`}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Origen */}
+        <Select
+          value={draft.origin}
+          onValueChange={(origin) => onDraftChange({ origin })}
+          disabled={busy}
+        >
+          <SelectTrigger
+            className="h-10 w-[60px] shrink-0 rounded-lg border-slate-200 bg-slate-50 px-2 text-xs font-semibold text-slate-700 md:w-[90px]"
+            aria-label="Origen"
+          >
+            <span className="truncate">{draft.origin || "GP"}</span>
+          </SelectTrigger>
+          <SelectContent position="popper" className="z-50">
+            {availableOrigins.map((origin) => (
+              <SelectItem key={origin} value={origin}>{origin}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+
+      {/* Refresh button */}
+      <button
+        type="button"
+        onClick={onRefresh}
+        disabled={isRefreshing || !draft.year}
+        aria-label="Actualizar datos"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition-colors duration-150 hover:bg-slate-50 active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {isRefreshing ? (
+          <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+        ) : (
+          <RefreshCw className="h-4 w-4 text-slate-600" />
+        )}
+      </button>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   Page
-   ═══════════════════════════════════════════════════════════════ */
-
-// defaultFilters removed
-
-function getTodayStr(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}${m}${d}`;
-}
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const availableYears = useMemo(() => getAvailableYears(), []);
-  const todayStr = useMemo(() => getTodayStr(), []);
-
-  // Draft = what user edits inside the filter panel
-  const [draft, setDraft] = useState<DashboardFilters>(() => {
-    const defaultYear = availableYears[0] ?? "2026";
-    return {
-      year: defaultYear,
-      mes: "Todos",
-      semana: "Todas",
-      version: getTodayStr(),
-    };
-  });
-
-  // Applied = what the dashboard actually uses
-  const [applied, setApplied] = useState<DashboardFilters>(() => {
-    const defaultYear = availableYears[0] ?? "2026";
-    return {
-      year: defaultYear,
-      mes: "Todos",
-      semana: "Todas",
-      version: getTodayStr(),
-    };
-  });
-
-  const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
-  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const isMobile = useIsMobile();
-
   const { setActions } = useHeaderActions();
+  const currentDefaults = useMemo(() => getDefaultCommercialFilters(), []);
 
+  // ── Filter state ──
+  const [filterDraft, setFilterDraft] = useState<DashboardFilters>({
+    year: "",
+    mes: "Todos",
+    semana: "Todas",
+    version: currentDefaults.date,
+    origin: "GP",
+  });
+  const [appliedFilters, setAppliedFilters] = useState<DashboardFilters>({
+    year: "",
+    mes: "Todos",
+    semana: "Todas",
+    version: currentDefaults.date,
+    origin: "GP",
+  });
+
+  // ── Options (years / months / weeks / origins) ──
+  const [availableYears, setAvailableYears]   = useState<string[]>([]);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const [availableWeeks, setAvailableWeeks]   = useState<string[]>([]);
+  const [availableOrigins, setAvailableOrigins] = useState<string[]>(["Todos", "GP", "TDA"]);
+
+  // ── Dashboard data (kept across loads for stale-while-loading) ──
+  const [dashboard, setDashboard]         = useState<DashboardResponse | null>(null);
+  const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
+  const [selectedOther, setSelectedOther] = useState(false);
+  const [selectedOtherFamily, setSelectedOtherFamily] = useState<string | null>(null);
+
+  // ── Fetch status machine ──
+  const [fetchStatus, setFetchStatus]     = useState<FetchStatus>("idle");
+  const [isRefreshing, setIsRefreshing]   = useState(false);
+  const [refreshError, setRefreshError]   = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+
+  // ── AbortController ref — cancel in-flight requests on new filter ──
+  const abortRef = useRef<AbortController | null>(null);
+
+  // ── In-memory cache keyed by "year|mes|semana|origin" ──
+  const cacheRef = useRef<Map<string, DashboardResponse>>(new Map());
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // applyResolvedDashboard
+  // ────────────────────────────────────────────────────────────────────────────
+  const applyResolvedDashboard = useCallback(
+    (response: DashboardResponse, fallback: DashboardFilters, isInit = false) => {
+      let resolvedMes = response.resolvedFilters.period || fallback.mes;
+      let resolvedYear = response.resolvedFilters.year || fallback.year;
+      // semana: start from what the API resolved, then override during init
+      let resolvedSemana = response.resolvedFilters.week || fallback.semana;
+      let resolvedOrigin = response.resolvedFilters.origin || fallback.origin;
+
+      // On first load: prefer current year/month and auto-select best week
+      if (isInit) {
+        const available = resolveInitialPeriod(
+          resolvedYear,
+          resolvedMes,
+          response.options.periods,
+          currentDefaults,
+        );
+        resolvedYear = available.year;
+        resolvedMes  = available.mes;
+
+        // Auto-select the current ISO week (or last available) for the init period.
+        // resolvedMes may have just been updated to the current month above.
+        resolvedSemana = resolveInitialWeek(
+          resolvedYear,
+          resolvedMes,
+          response.options.weeks,
+          currentDefaults,
+        );
+
+        // Resolve default origin: default to "GP" if available, else first available
+        const origins = response.options.origins || [];
+        if (origins.includes("GP")) {
+          resolvedOrigin = "GP";
+        } else if (origins.includes("Todos")) {
+          resolvedOrigin = "Todos";
+        } else if (origins.length > 0) {
+          resolvedOrigin = origins[0];
+        }
+      }
+
+      const resolved: DashboardFilters = {
+        year: resolvedYear,
+        mes: resolvedMes,
+        semana: resolvedSemana,
+        version: fallback.version,
+        origin: isInit ? resolvedOrigin : fallback.origin,
+      };
+
+      setAppliedFilters(resolved);
+      setFilterDraft(resolved);
+      setDashboard(response);
+      setAvailableYears(response.options.years);
+      setAvailableMonths(response.options.periods);
+      setAvailableWeeks(response.options.weeks);
+      setAvailableOrigins(response.options.origins);
+
+      const hasRows = response.kpis.totalKilos > 0 || response.kpis.totalVenta > 0;
+      setFetchStatus(hasRows ? "success" : "empty");
+    },
+    [currentDefaults],
+  );
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // loadDashboard — reads only, never executes SP
+  // ────────────────────────────────────────────────────────────────────────────
+  const loadDashboard = useCallback(
+    async (filters: DashboardFilters, isInit = false) => {
+      // 1. Cancel any in-flight request
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      const key = cacheKey(filters);
+
+      // 2. Serve from cache instantly (stale-while-revalidate on init)
+      if (cacheRef.current.has(key)) {
+        const cached = cacheRef.current.get(key)!;
+        applyResolvedDashboard(cached, filters, isInit);
+        // Skip network hit (not a refresh)
+        return;
+      }
+
+      // 3. Keep stale data visible, show spinner
+      setFetchStatus("loading");
+      setRefreshError(null);
+
+      try {
+        const params = new URLSearchParams({
+          year:   filters.year,
+          period: filters.mes,
+          week:   filters.semana,
+          origin: filters.origin,
+        });
+        const response = await fetchJson<DashboardResponse>(
+          `/api/comercial/dashboard?${params.toString()}`,
+          { signal: controller.signal },
+        );
+
+        if (controller.signal.aborted) return;
+
+        // 4. Store in cache
+        cacheRef.current.set(key, response);
+
+        applyResolvedDashboard(response, filters, isInit);
+      } catch (error) {
+        if (controller.signal.aborted) return; // ignore cancelled
+        setFetchStatus("error");
+        setRefreshError(error instanceof Error ? error.message : "No se pudo cargar la información.");
+      }
+    },
+    [applyResolvedDashboard],
+  );
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Initialization — runs once
+  // ────────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initialize() {
+      const initialFilters: DashboardFilters = {
+        year: "",       // empty → API resolves to latest available year
+        mes: "Todos",
+        semana: "Todas",
+        version: currentDefaults.date,
+        origin: "GP",
+      };
+      setFilterDraft(initialFilters);
+      setAppliedFilters(initialFilters);
+      setFetchStatus("loading");
+
+      try {
+        const params = new URLSearchParams({
+          year:   initialFilters.year,
+          period: initialFilters.mes,
+          week:   initialFilters.semana,
+          origin: initialFilters.origin,
+        });
+        const response = await fetchJson<DashboardResponse>(
+          `/api/comercial/dashboard?${params.toString()}`,
+        );
+        if (cancelled) return;
+
+        // Cache the empty-year response
+        cacheRef.current.set(cacheKey(initialFilters), response);
+        applyResolvedDashboard(response, initialFilters, /* isInit */ true);
+        setHasInitialized(true);
+      } catch {
+        if (cancelled) return;
+        setFetchStatus("error");
+        setHasInitialized(true);
+      }
+    }
+
+    void initialize();
+    return () => { cancelled = true; };
+  }, [applyResolvedDashboard, currentDefaults.date]);
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // React to filter changes (after initialization)
+  // ────────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!hasInitialized || !filterDraft.year) return;
+    void loadDashboard(filterDraft);
+  }, [
+    hasInitialized,
+    filterDraft.year,
+    filterDraft.mes,
+    filterDraft.semana,
+    filterDraft.origin,
+    // version intentionally omitted — it's only relevant for refresh
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // handleDraftChange
+  // ────────────────────────────────────────────────────────────────────────────
   const handleDraftChange = useCallback((patch: Partial<DashboardFilters>) => {
-    setDraft((prev) => ({ ...prev, ...patch }));
+    setRefreshError(null);
+    setFilterDraft((current) => ({ ...current, ...patch }));
   }, []);
 
-  // Available dates for the currently selected filters in draft
-  const draftAvailableDates = useMemo(() => {
-    return getAvailableDates(draft.year, draft.mes, draft.semana);
-  }, [draft.year, draft.mes, draft.semana]);
+  // ────────────────────────────────────────────────────────────────────────────
+  // handleRefresh — the ONLY action that executes the SP
+  // ────────────────────────────────────────────────────────────────────────────
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing || !filterDraft.year) return;
 
-  // Fallback to the latest available date if draft.version is empty or invalid
-  const resolvedDraftVersion = useMemo(() => {
-    const isYearMatch = draft.version && draft.version.startsWith(draft.year);
-    const isMonthMatch = !draft.version || draft.mes === "Todos" || draft.version.slice(4, 6) === draft.mes;
-    if (draft.version && isYearMatch && isMonthMatch) {
-      return draft.version;
-    }
-    const pastOrEqualDates = draftAvailableDates.filter((d) => d <= todayStr);
-    return pastOrEqualDates.length > 0 ? pastOrEqualDates.at(-1)! : (draftAvailableDates.at(-1) ?? todayStr);
-  }, [draft.version, draft.year, draft.mes, draftAvailableDates, todayStr]);
-
-  // Available dates for applied filters (used for title date selector)
-  const appliedAvailableDates = useMemo(() => {
-    return getAvailableDates(applied.year, applied.mes, applied.semana);
-  }, [applied.year, applied.mes, applied.semana]);
-
-  // Fallback for applied version
-  const resolvedAppliedVersion = useMemo(() => {
-    const isYearMatch = applied.version && applied.version.startsWith(applied.year);
-    const isMonthMatch = !applied.version || applied.mes === "Todos" || applied.version.slice(4, 6) === applied.mes;
-    if (applied.version && isYearMatch && isMonthMatch) {
-      return applied.version;
-    }
-    const pastOrEqualDates = appliedAvailableDates.filter((d) => d <= todayStr);
-    return pastOrEqualDates.length > 0 ? pastOrEqualDates.at(-1)! : (appliedAvailableDates.at(-1) ?? todayStr);
-  }, [applied.version, applied.year, applied.mes, appliedAvailableDates, todayStr]);
-
-  const handleApply = useCallback(() => {
-    if (isRefreshing) return;
     setIsRefreshing(true);
-    setTimeout(() => {
-      setApplied({
-        ...draft,
-        version: resolvedDraftVersion,
-      });
-      setSelectedFamily(null); // Clear selection on apply
-      setIsRefreshing(false);
-    }, 600);
-  }, [draft, resolvedDraftVersion, isRefreshing]);
+    setRefreshError(null);
+    setHasAttemptedRefresh(true);
 
-  // Inject header buttons
+    try {
+      const response = await fetchJson<RefreshResponse>("/api/comercial/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          year:   filterDraft.year,
+          period: filterDraft.mes,
+          week:   filterDraft.semana,
+          date:   filterDraft.version,
+          origin: filterDraft.origin,
+        }),
+      });
+
+      const newApplied: DashboardFilters = {
+        year:    response.resolvedFilters.year   || filterDraft.year,
+        mes:     response.resolvedFilters.period || filterDraft.mes,
+        semana:  response.resolvedFilters.week   || filterDraft.semana,
+        version: response.resolvedFilters.date   || filterDraft.version,
+        origin:  response.resolvedFilters.origin || filterDraft.origin,
+      };
+
+      // Invalidate the cache for this filter combination so next read is fresh
+      cacheRef.current.delete(cacheKey(newApplied));
+
+      setSelectedFamily(null);
+      setSelectedOther(false);
+      setSelectedOtherFamily(null);
+
+      const dashboardResponse: DashboardResponse = {
+        kpis: response.kpis,
+        families: response.families,
+        products: response.products,
+        options: response.options,
+        resolvedFilters: response.resolvedFilters,
+      };
+
+      // Cache the fresh response
+      cacheRef.current.set(cacheKey(newApplied), dashboardResponse);
+      applyResolvedDashboard(dashboardResponse, newApplied);
+      setRefreshError(response.warning);
+    } catch (error) {
+      setRefreshError(error instanceof Error ? error.message : "No se pudo actualizar la información.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [applyResolvedDashboard, filterDraft, isRefreshing]);
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Load products when a family is selected
+  // ── Load products when a family is selected ──
+  useEffect(() => {
+    const family = selectedOtherFamily ?? selectedFamily;
+    if (!hasInitialized || !family || family === "Otros") return;
+    let cancelled = false;
+
+    async function loadFamilyProducts() {
+      try {
+        const params = new URLSearchParams({
+          year:   appliedFilters.year,
+          period: appliedFilters.mes,
+          week:   appliedFilters.semana,
+          origin: appliedFilters.origin,
+          family: family ?? "",
+        });
+        const response = await fetchJson<DashboardResponse>(
+          `/api/comercial/dashboard?${params.toString()}`,
+        );
+        if (cancelled) return;
+        setDashboard((prev) => prev ? { ...prev, products: response.products } : response);
+      } catch {
+        // keep current products
+      }
+    }
+
+    void loadFamilyProducts();
+    return () => { cancelled = true; };
+  }, [selectedFamily, selectedOtherFamily, appliedFilters, hasInitialized]);
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Mount header actions
+  // ────────────────────────────────────────────────────────────────────────────
+  const isLoading = fetchStatus === "loading";
+
   useEffect(() => {
     setActions(
       <HeaderActions
-        draft={draft}
+        draft={filterDraft}
         onDraftChange={handleDraftChange}
-        onApply={handleApply}
+        onRefresh={() => { void handleRefresh(); }}
         availableYears={availableYears}
+        availableMonths={availableMonths}
+        availableWeeks={availableWeeks}
+        availableOrigins={availableOrigins}
+        currentDate={currentDefaults.date}
         isRefreshing={isRefreshing}
+        isLoading={isLoading}
+        isMobile={isMobile}
       />,
     );
     return () => setActions(null);
-  }, [draft, handleDraftChange, handleApply, availableYears, setActions, isRefreshing]);
+  }, [
+    currentDefaults.date,
+    filterDraft,
+    handleDraftChange,
+    handleRefresh,
+    isRefreshing,
+    isLoading,
+    availableOrigins,
+    availableMonths,
+    availableWeeks,
+    availableYears,
+    setActions,
+    isMobile,
+  ]);
 
-  const appliedWithResolvedVersion = useMemo(() => {
-    return {
-      ...applied,
-      version: resolvedAppliedVersion,
-    };
-  }, [applied, resolvedAppliedVersion]);
+  // ────────────────────────────────────────────────────────────────────────────
+  // Derived data for charts
+  // ────────────────────────────────────────────────────────────────────────────
+  const availableDates     = [currentDefaults.date];
+  const selectedDateLabel  = currentDefaults.dateLabel;
 
-  // KPIs from applied filters
-  const data = useMemo(() => getKpiData(appliedWithResolvedVersion), [appliedWithResolvedVersion]);
+  const kilosPieData = useMemo<PieChartItem[]>(() => {
+    if (!dashboard || !dashboard.families) return [];
 
-  // Grouped PieChart data
-  const kilosPieData = useMemo(
-    () => getPieChartData(data.filteredRows ?? [], "kilos"),
-    [data.filteredRows]
+    // 1. Agrupar por Familia (name) y sumar kilos
+    const groupedMap = new Map<string, number>();
+    dashboard.families.forEach((item) => {
+      const name = item.name.trim();
+      const currentVal = groupedMap.get(name) || 0;
+      groupedMap.set(name, currentVal + item.kilos);
+    });
+
+    // 2. Convertir a array y ordenar de forma descendente por kilos
+    const sortedFamilies = Array.from(groupedMap.entries())
+      .map(([name, kilos]) => ({ name, kilos }))
+      .sort((a, b) => b.kilos - a.kilos);
+
+    const totalKilos = sortedFamilies.reduce((sum, item) => sum + item.kilos, 0);
+    if (totalKilos === 0) return [];
+
+    // 3. Si hay 5 o menos familias, no agrupar en "Otros"
+    if (sortedFamilies.length <= 5) {
+      return sortedFamilies.map((item) => ({
+        name: item.name,
+        value: item.kilos,
+        percentage: (item.kilos / totalKilos) * 100,
+      }));
+    }
+
+    // 4. Si hay más de 5 familias, tomar Top 5 y agrupar las restantes en "Otros"
+    const top5 = sortedFamilies.slice(0, 5);
+    const remaining = sortedFamilies.slice(5);
+    const otrosKilos = remaining.reduce((sum, item) => sum + item.kilos, 0);
+
+    const result: PieChartItem[] = top5.map((item) => ({
+      name: item.name,
+      value: item.kilos,
+      percentage: (item.kilos / totalKilos) * 100,
+    }));
+
+    result.push({
+      name: "Otros",
+      value: otrosKilos,
+      percentage: (otrosKilos / totalKilos) * 100,
+      isOther: true,
+      children: remaining.map((item) => ({
+        name: item.name,
+        value: item.kilos,
+        percentage: (item.kilos / totalKilos) * 100,
+      })),
+    });
+
+    return result;
+  }, [dashboard]);
+
+  const hasOtros = useMemo(() => {
+    if (!dashboard || !dashboard.families) return false;
+    const uniqueFamilies = new Set(dashboard.families.map(f => f.name.trim()));
+    return uniqueFamilies.size > 5;
+  }, [dashboard]);
+
+  const pieSubtitle = hasOtros 
+    ? "Top 5 familias + Otros por toneladas vendidas" 
+    : "Top 5 familias por toneladas vendidas";
+
+  const productsPieData = useMemo<ProductItem[]>(() => {
+    const activeFamily = selectedOtherFamily ?? selectedFamily;
+    if (!dashboard || !activeFamily) return [];
+    const total = dashboard.products.reduce((s, i) => s + i.kilos, 0);
+    return dashboard.products.map((item) => ({
+      name: item.name,
+      value: item.kilos,
+      percentage: total > 0 ? (item.kilos / total) * 100 : 0,
+    }));
+  }, [dashboard, selectedFamily, selectedOtherFamily]);
+
+  // Determine whether we have real data to display
+  const hasData = Boolean(
+    dashboard && (dashboard.kpis.totalKilos > 0 || dashboard.kpis.totalVenta > 0),
   );
 
-  const productsPieData = useMemo(() => {
-    if (!selectedFamily) return [];
-    return getProductPieData(data.filteredRows ?? [], selectedFamily);
-  }, [data.filteredRows, selectedFamily]);
+  // Show empty state only when fetch is DONE and returned nothing
+  const showEmptyState = (fetchStatus === "empty" || fetchStatus === "error") && !hasData;
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // Render
+  // ────────────────────────────────────────────────────────────────────────────
   return (
     <section className="space-y-6 pb-6">
+      {/* ── Title row ── */}
       <div className="flex flex-col gap-2">
-        <div className="flex flex-row items-center justify-between gap-4 w-full border-b border-slate-100 pb-3">
-          {/* Left: Título dinámico */}
-          <h1 className="text-xl font-bold tracking-tight text-slate-950">
-            Ventas año {applied.year}
-          </h1>
+        <div className="flex w-full flex-row items-center justify-between gap-4 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-slate-950">
+              Ventas año {appliedFilters.year || "—"}
+            </h1>
+            {/* Inline loading badge — never shows blank screen */}
+            {isLoading && (
+              <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Actualizando…
+              </span>
+            )}
+          </div>
 
-          {/* Right: Date selection Popover/Sheet */}
+          {/* Calendar picker */}
           <div className="flex items-center gap-2">
             {isMobile ? (
               <Sheet open={isSelectorOpen} onOpenChange={setIsSelectorOpen}>
                 <SheetTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-9 w-[135px] justify-between rounded-lg border-slate-200 bg-white text-xs px-2.5 font-semibold text-slate-700 shadow-xs hover:bg-slate-50 focus:ring-1 cursor-pointer"
+                    className="h-9 w-[135px] cursor-pointer justify-between rounded-lg border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 focus:ring-1"
                   >
-                    <span>
-                      {resolvedDraftVersion ? formatFechaDmy(resolvedDraftVersion) : "Fecha"}
-                    </span>
+                    <span>{selectedDateLabel}</span>
                     <CalendarIcon className="h-3.5 w-3.5 text-slate-400" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="rounded-t-3xl p-4 bg-white">
+                <SheetContent side="bottom" className="rounded-t-3xl bg-white p-4">
                   <div className="flex justify-center py-2">
                     <CalendarPicker
-                      value={resolvedDraftVersion}
-                      onChange={(d) => {
-                        setDraft((prev) => ({ ...prev, version: d }));
-                        setIsSelectorOpen(false);
-                      }}
+                      key={currentDefaults.date}
+                      value={currentDefaults.date}
+                      availableDates={availableDates}
+                      onChange={() => setIsSelectorOpen(false)}
                     />
                   </div>
                 </SheetContent>
@@ -777,39 +967,55 @@ export default function HomePage() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-9 w-[135px] justify-between rounded-lg border-slate-200 bg-white text-xs px-2.5 font-semibold text-slate-700 shadow-xs hover:bg-slate-50 focus:ring-1 cursor-pointer"
+                    className="h-9 w-[135px] cursor-pointer justify-between rounded-lg border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 focus:ring-1"
                   >
-                    <span>
-                      {resolvedDraftVersion ? formatFechaDmy(resolvedDraftVersion) : "Fecha"}
-                    </span>
+                    <span>{selectedDateLabel}</span>
                     <CalendarIcon className="h-3.5 w-3.5 text-slate-400" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="w-[280px] p-3 rounded-xl border border-slate-200 bg-white shadow-lg z-50">
+                <PopoverContent align="end" className="z-50 w-[280px] rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
                   <CalendarPicker
-                    value={resolvedDraftVersion}
-                    onChange={(d) => {
-                      setDraft((prev) => ({ ...prev, version: d }));
-                      setIsSelectorOpen(false);
-                    }}
+                    key={currentDefaults.date}
+                    value={currentDefaults.date}
+                    availableDates={availableDates}
+                    onChange={() => setIsSelectorOpen(false)}
                   />
                 </PopoverContent>
               </Popover>
             )}
           </div>
         </div>
+
+        {/* Error / warning banner */}
+        {refreshError ? (
+          <p className="text-sm text-rose-600">{refreshError}</p>
+        ) : null}
       </div>
 
-      {!data.hasData ? (
+      {/* ── Content area ── */}
+      {showEmptyState ? (
+        /* Empty state — only shown when fetch finished and truly no data */
         <Card className="border-slate-200 bg-white shadow-sm">
           <CardContent className="flex min-h-[200px] items-center justify-center">
-            <p className="text-sm text-slate-400">No hay datos para la fecha seleccionada.</p>
+            <div className="space-y-2 text-center">
+              <p className="text-sm text-slate-400">No hay datos para la fecha seleccionada.</p>
+              <p className="text-xs text-slate-400">
+                {hasAttemptedRefresh
+                  ? `No se encontraron datos para ${selectedDateLabel} después de actualizar.`
+                  : "Presiona actualizar para generar la versión de esta fecha."}
+              </p>
+            </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
+        /* Data area — rendered even while isLoading (stale data stays visible) */
+        <div
+          className={`space-y-6 transition-opacity duration-200 ${
+            isLoading ? "opacity-60 pointer-events-none" : "opacity-100"
+          }`}
+        >
+          {/* KPI cards */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* KPI: Volumen vendido */}
             <Card className="border-slate-200 bg-white shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3">
@@ -821,17 +1027,14 @@ export default function HomePage() {
                       VOLUMEN VENDIDO
                     </p>
                     <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-                      {formatVolume(data.totalKilos)}
+                      {formatVolume(dashboard?.kpis.totalKilos ?? 0)}
                     </p>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-slate-400">
-                  Volumen vendido del periodo seleccionado
-                </p>
+                <p className="mt-3 text-xs text-slate-400">Volumen vendido del periodo seleccionado</p>
               </CardContent>
             </Card>
 
-            {/* KPI: Valor venta */}
             <Card className="border-slate-200 bg-white shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3">
@@ -843,24 +1046,27 @@ export default function HomePage() {
                       VALOR VENTA
                     </p>
                     <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
-                      {fmtCurrency(data.totalVenta)}
+                      {fmtCurrency(dashboard?.kpis.totalVenta ?? 0)}
                     </p>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-slate-400">
-                  Valor vendido del periodo seleccionado
-                </p>
+                <p className="mt-3 text-xs text-slate-400">Valor vendido del periodo seleccionado</p>
               </CardContent>
             </Card>
           </div>
 
+          {/* Family pie chart */}
           <div className="w-full">
             <FamilyPieChart
-              title="Participación por familia en toneladas"
-              subtitle="Top 5 familias por toneladas vendidas"
+              title="Top 5 familias"
+              subtitle={pieSubtitle}
               data={kilosPieData}
               selectedFamily={selectedFamily}
               onSelectFamily={setSelectedFamily}
+              selectedOther={selectedOther}
+              onSelectOther={setSelectedOther}
+              selectedOtherFamily={selectedOtherFamily}
+              onSelectOtherFamily={setSelectedOtherFamily}
               productsData={productsPieData}
             />
           </div>
