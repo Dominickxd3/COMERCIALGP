@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
 
 type PieChartItem = {
   name: string;
@@ -20,7 +20,7 @@ type PieChartItem = {
 
 type ProductItem = {
   name: string;
-  value: number; // in Kg
+  value: number;
   percentage: number;
 };
 
@@ -38,14 +38,14 @@ type FamilyPieChartProps = {
 };
 
 const MEAT_CHART_COLORS = [
-  "#B91C1C", // rojo carne
-  "#DC2626", // rojo fresco
-  "#F97316", // naranja pollo
-  "#FB923C", // naranja piel
-  "#FCA5A5", // rosado cerdo
-  "#FDBA74", // piel clara
-  "#A16207", // dorado/tostado
-  "#78716C", // gris carnicería para otros
+  "#B91C1C",
+  "#DC2626",
+  "#F97316",
+  "#FB923C",
+  "#FCA5A5",
+  "#FDBA74",
+  "#A16207",
+  "#78716C",
 ];
 
 export function formatVolume(valueKg: number): string {
@@ -53,14 +53,12 @@ export function formatVolume(valueKg: number): string {
     const kilos = Math.round(valueKg);
     return `${kilos.toLocaleString("en-US")} K`;
   }
-  
+
   const tonnes = valueKg / 1000;
-  // Redondeamos a 1 decimal para evitar problemas de precisión de punto flotante en JS
   const tonnesFixed = Math.round((tonnes + Number.EPSILON) * 10) / 10;
-  
   const formattedValue = tonnesFixed.toLocaleString("en-US", {
     minimumFractionDigits: 0,
-    maximumFractionDigits: 1
+    maximumFractionDigits: 1,
   });
 
   return `${formattedValue} T`;
@@ -86,13 +84,9 @@ type CustomLabelProps = {
   cx?: number;
   cy?: number;
   midAngle?: number;
-  innerRadius?: number;
   outerRadius?: number;
   name?: string;
   percentage?: number;
-  x?: number;
-  y?: number;
-  textAnchor?: "inherit" | "end" | "middle" | "start";
   isMobile?: boolean;
   width?: number | string;
 };
@@ -108,43 +102,33 @@ const renderCustomizedLabel = ({
   width,
 }: CustomLabelProps) => {
   if (!name || percentage === undefined) return null;
+
   const labelText = formatExternalLabel(name, percentage, isMobile);
   if (!labelText) return null;
 
   const parsedWidth = typeof width === "number" ? width : (width ? parseFloat(width) : undefined);
-  const svgWidth = parsedWidth || (cx * 2);
+  const svgWidth = parsedWidth || cx * 2;
   const offset = isMobile ? 10 : 20;
-
   const startX = cx + outerRadius * Math.cos(-midAngle * RADIAN);
   const startY = cy + outerRadius * Math.sin(-midAngle * RADIAN);
-
   const endXRaw = cx + (outerRadius + offset) * Math.cos(-midAngle * RADIAN);
   const endY = cy + (outerRadius + offset) * Math.sin(-midAngle * RADIAN);
-
-  // Dynamic clamping to prevent text from being cut off on left/right borders
   const charWidth = isMobile ? 6 : 7.5;
   const estimatedWidth = labelText.length * charWidth;
   const safetyMargin = isMobile ? 6 : 10;
-
-  let endX = endXRaw;
   const isLeft = endXRaw < cx;
 
+  let endX = endXRaw;
   if (isLeft) {
-    // Left side: textAnchor is "end", meaning text extends to the left of textX (endX - 4).
-    // So we must guarantee: endX - 4 - estimatedWidth >= safetyMargin.
     const minX = estimatedWidth + 4 + safetyMargin;
     endX = Math.max(minX, endXRaw);
   } else {
-    // Right side: textAnchor is "start", meaning text extends to the right of textX (endX + 4).
-    // So we must guarantee: endX + 4 + estimatedWidth <= svgWidth - safetyMargin.
     const maxX = svgWidth - estimatedWidth - 4 - safetyMargin;
     endX = Math.min(maxX, endXRaw);
   }
 
-  const textAnchor: "inherit" | "end" | "middle" | "start" = isLeft ? "end" : "start";
+  const textAnchor: "end" | "start" = isLeft ? "end" : "start";
   const textX = endX + (isLeft ? -4 : 4);
-
-  // Avoid drawing connector line segments that cross inside/through the donut slice
   const lineEndX = isLeft ? Math.min(startX, endX) : Math.max(startX, endX);
 
   return (
@@ -158,10 +142,10 @@ const renderCustomizedLabel = ({
       <text
         x={textX}
         y={endY}
-        fill="#475569" // slate-600
+        fill="#475569"
         textAnchor={textAnchor}
         dominantBaseline="central"
-        className="text-[9px] sm:text-xs font-semibold pointer-events-none select-none"
+        className="pointer-events-none select-none text-[9px] font-semibold sm:text-xs"
       >
         {labelText}
       </text>
@@ -179,6 +163,7 @@ type CustomTooltipProps = {
 function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null;
   const data = payload[0].payload;
+
   return (
     <div className="rounded-lg border border-slate-100 bg-white p-3 shadow-md">
       <p className="text-sm font-semibold text-slate-950">{data.name}</p>
@@ -186,7 +171,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
         Volumen: <span className="font-medium text-slate-950">{formatVolume(data.value)}</span>
       </p>
       <p className="text-xs text-slate-500">
-        Participación: <span className="font-medium text-slate-950">{data.percentage.toFixed(0)}%</span>
+        Participacion: <span className="font-medium text-slate-950">{data.percentage.toFixed(0)}%</span>
       </p>
     </div>
   );
@@ -202,33 +187,26 @@ export function FamilyPieChart({
   onSelectOther,
   selectedOtherFamily = null,
   onSelectOtherFamily,
-  productsData
+  productsData,
 }: FamilyPieChartProps) {
   const isMobile = useIsMobile();
-  const [showOtrosMessage, setShowOtrosMessage] = useState(false);
 
   const safeData = useMemo(() => {
     if (!data) return [];
+
     const seen = new Set<string>();
     return data.filter((item) => {
       const key = item.name.trim().toUpperCase();
       if (!key) return false;
-      if (key === "OTROS") {
-        if (seen.has("OTROS")) return false;
-        seen.add("OTROS");
-        return true;
-      }
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
   }, [data]);
 
-  const hasData = safeData && safeData.length > 0;
+  const hasData = safeData.length > 0;
 
-  // Calculate total volume for the center label
   const totalVolumeText = useMemo(() => {
-    if (!safeData || safeData.length === 0) return "0 K";
     const totalKg = safeData.reduce((sum, item) => sum + item.value, 0);
     return formatVolume(totalKg);
   }, [safeData]);
@@ -236,124 +214,62 @@ export function FamilyPieChart({
   const selectedFamilyColor = useMemo(() => {
     const activeFamily = selectedOtherFamily ?? selectedFamily;
     if (!activeFamily) return "#78716C";
+
     const idx = safeData.findIndex((item) => item.name === activeFamily);
     if (idx === -1) return "#78716C";
-    const isOtros = safeData[idx].name === "Otros";
-    return isOtros ? "#78716C" : MEAT_CHART_COLORS[idx % (MEAT_CHART_COLORS.length - 1)];
-  }, [selectedFamily, selectedOtherFamily, safeData]);
+    return safeData[idx].name === "Otros"
+      ? "#78716C"
+      : MEAT_CHART_COLORS[idx % (MEAT_CHART_COLORS.length - 1)];
+  }, [safeData, selectedFamily, selectedOtherFamily]);
+
+  const otrosChildren = useMemo(
+    () => safeData.find((item) => item.name === "Otros")?.children?.filter((item) => item.name !== "Otros") ?? [],
+    [safeData],
+  );
+
+  const detailFamily = selectedOtherFamily ?? selectedFamily;
+  const showProductsDetail = Boolean(detailFamily);
+  const showOtherFamiliesDetail = selectedOther && !selectedOtherFamily;
+  const hasSelection = Boolean(selectedFamily) || selectedOther;
 
   const handleItemClick = (name: string) => {
     if (name === "Otros") {
-      onSelectOther?.(true);
       onSelectFamily?.(null);
+      onSelectOther?.(true);
+      onSelectOtherFamily?.(null);
       return;
     }
-    
+
     onSelectOther?.(false);
     onSelectOtherFamily?.(null);
-    if (onSelectFamily) {
-      if (selectedFamily === name) {
-        onSelectFamily(null); // toggle off
-      } else {
-        onSelectFamily(name);
-      }
-    }
+    onSelectFamily?.(selectedFamily === name ? null : name);
   };
 
-  const displayTitle = useMemo(() => {
-    if (selectedOtherFamily) {
-      return `Top productos de ${selectedOtherFamily}`;
-    }
-    if (selectedOther) {
-      return "Familias incluidas en Otros";
-    }
-    if (selectedFamily) {
-      return `Top productos de ${selectedFamily}`;
-    }
-    return "Top 5 familias";
-  }, [selectedFamily, selectedOther, selectedOtherFamily]);
-
-  const displaySubtitle = useMemo(() => {
-    if (selectedOtherFamily) {
-      return "Productos con mayor volumen vendido";
-    }
-    if (selectedOther) {
-      return "Familias fuera del Top 5";
-    }
-    if (selectedFamily) {
-      return "Productos con mayor volumen vendido";
-    }
-    return subtitle;
-  }, [selectedFamily, selectedOther, selectedOtherFamily, subtitle]);
+  const clearDetail = () => {
+    onSelectFamily?.(null);
+    onSelectOther?.(false);
+    onSelectOtherFamily?.(null);
+  };
 
   const chartOuterRadius = isMobile ? 76 : 96;
   const chartInnerRadius = isMobile ? 44 : 56;
 
   return (
-    <Card className="border-slate-200 bg-white shadow-sm flex flex-col p-4 sm:p-6 space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <div>
-          <CardTitle className="text-sm font-semibold text-slate-950">{displayTitle}</CardTitle>
-          <CardDescription className="text-xs text-slate-500 mt-1">{displaySubtitle}</CardDescription>
-        </div>
-        <div className="flex gap-2">
-          {selectedOtherFamily ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2.5 rounded-lg text-xs font-medium border-slate-200 text-slate-600 hover:text-slate-900 bg-white"
-                onClick={() => onSelectOtherFamily?.(null)}
-              >
-                Volver a Otros
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2.5 rounded-lg text-xs font-medium border-slate-200 text-slate-600 hover:text-slate-900 bg-white"
-                onClick={() => {
-                  onSelectOther?.(false);
-                  onSelectOtherFamily?.(null);
-                }}
-              >
-                Volver a familias
-              </Button>
-            </>
-          ) : selectedOther ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2.5 rounded-lg text-xs font-medium border-slate-200 text-slate-600 hover:text-slate-900 bg-white"
-              onClick={() => {
-                onSelectOther?.(false);
-                onSelectOtherFamily?.(null);
-              }}
-            >
-              Volver a familias
-            </Button>
-          ) : selectedFamily ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2.5 rounded-lg text-xs font-medium border-slate-200 text-slate-600 hover:text-slate-900 bg-white"
-              onClick={() => onSelectFamily?.(null)}
-            >
-              Volver a familias
-            </Button>
-          ) : null}
-        </div>
+    <Card className="flex flex-col space-y-6 border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="border-b border-slate-100 pb-4">
+        <CardTitle className="text-sm font-semibold text-slate-950">{title}</CardTitle>
+        <CardDescription className="mt-1 text-xs text-slate-500">{subtitle}</CardDescription>
       </div>
-      <CardContent className="p-0 flex flex-col justify-center">
+
+      <CardContent className="flex flex-col justify-center p-0">
         {!hasData ? (
-          <div className="flex h-full items-center justify-center min-h-[220px]">
-            <p className="text-sm text-slate-400">No hay información para el periodo seleccionado.</p>
+          <div className="flex min-h-[220px] items-center justify-center">
+            <p className="text-sm text-slate-400">No hay informacion para el periodo seleccionado.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-[400px_1fr] items-center gap-8 w-full h-full">
-            {/* Left/Top: Pie Chart with absolute centered Total */}
-            {(!isMobile || (!selectedFamily && !selectedOther && !selectedOtherFamily)) && (
-              <div className="relative w-full h-[260px] md:h-[300px] flex items-center justify-center">
-                <div className="w-full h-full">
+          <div className="grid h-full w-full grid-cols-1 items-center gap-8 md:grid-cols-[400px_1fr]">
+              <div className="relative flex h-[260px] w-full items-center justify-center md:h-[300px]">
+                <div className="h-full w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart className="overflow-visible" margin={{ top: 24, right: 44, bottom: 24, left: 44 }}>
                       <Pie
@@ -366,10 +282,9 @@ export function FamilyPieChart({
                         innerRadius={chartInnerRadius}
                         outerRadius={chartOuterRadius}
                         paddingAngle={1}
-                        fill="#8884d8"
                         dataKey="value"
                         onClick={(entry) => {
-                          if (entry && entry.name) {
+                          if (entry?.name) {
                             handleItemClick(entry.name);
                           }
                         }}
@@ -379,18 +294,15 @@ export function FamilyPieChart({
                             ? "#78716C"
                             : MEAT_CHART_COLORS[index % (MEAT_CHART_COLORS.length - 1)];
                           const isSelected = (entry.name === "Otros" && selectedOther) || selectedFamily === entry.name;
-                          const hasSelection = !!selectedFamily || selectedOther;
                           const opacity = hasSelection && !isSelected ? 0.35 : 1;
-                          const stroke = isSelected ? "#7F1D1D" : "#ffffff";
-                          const strokeWidth = isSelected ? 3 : 1;
 
                           return (
                             <Cell
                               key={`cell-${index}`}
                               fill={baseColor}
                               opacity={opacity}
-                              stroke={stroke}
-                              strokeWidth={strokeWidth}
+                              stroke={isSelected ? "#7F1D1D" : "#ffffff"}
+                              strokeWidth={isSelected ? 3 : 1}
                               className="cursor-pointer outline-none"
                             />
                           );
@@ -400,32 +312,101 @@ export function FamilyPieChart({
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                
-                {/* Center donut label */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 leading-none">TOTAL</span>
-                  <span className="text-xl font-extrabold tracking-tight text-slate-900 mt-1 leading-none">
+
+                <div className="pointer-events-none absolute inset-0 flex select-none flex-col items-center justify-center">
+                  <span className="text-[10px] font-bold uppercase leading-none tracking-wider text-slate-400">TOTAL</span>
+                  <span className="mt-1 text-xl font-extrabold leading-none tracking-tight text-slate-900">
                     {totalVolumeText}
                   </span>
                 </div>
               </div>
-            )}
 
-            {/* Right/Bottom: Dynamic Area (Families list OR Products list) */}
-            <div className="flex flex-col justify-center space-y-3 pr-2">
-              {selectedOtherFamily ? (
-                /* Products list for family inside Otros */
-                <div className="flex flex-col space-y-3">
-                  {/* Products List */}
-                  <div className="space-y-3">
-                    {productsData?.map((item) => (
-                      <div key={item.name} className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-950">
-                          <span className="truncate">{item.name.replace(/\s*[pP]roducto\s*$/, "").trim()}</span>
-                          <span className="text-slate-600 font-medium whitespace-nowrap">{formatVolume(item.value)}</span>
+              <div className="flex flex-col justify-center space-y-3 pr-2">
+                {!selectedFamily && !selectedOther && (
+                  <>
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-slate-950">{title}</CardTitle>
+                      <CardDescription className="mt-1 text-xs text-slate-500">{subtitle}</CardDescription>
+                    </div>
+
+                    {safeData.map((item, index) => {
+                      const color = item.name === "Otros"
+                        ? "#78716C"
+                        : MEAT_CHART_COLORS[index % (MEAT_CHART_COLORS.length - 1)];
+
+                      return (
+                        <div
+                          key={item.name}
+                          onClick={() => handleItemClick(item.name)}
+                          className="cursor-pointer rounded-lg border border-transparent p-2 transition-all hover:bg-slate-50"
+                        >
+                          <div className="flex items-start gap-2.5 text-sm">
+                            <span
+                              className="mt-1.5 h-3 w-3 shrink-0 rounded-full"
+                              style={{ backgroundColor: color }}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="font-semibold text-slate-900">{item.name}</span>
+                                <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-slate-600">
+                                  {formatVolume(item.value)} <span className="mx-0.5 text-slate-300">·</span> {item.percentage.toFixed(0)}%
+                                </span>
+                              </div>
+                              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{
+                                    width: `${item.percentage}%`,
+                                    backgroundColor: color,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        {/* Progress Bar */}
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      );
+                    })}
+                  </>
+                )}
+
+                {showProductsDetail && (
+                  <>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <CardTitle className="text-sm font-semibold text-slate-950">{`Top productos de ${detailFamily}`}</CardTitle>
+                        <CardDescription className="mt-1 text-xs text-slate-500">
+                          Productos con mayor volumen vendido
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        {selectedOtherFamily ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-lg border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 hover:text-slate-900"
+                            onClick={() => onSelectOtherFamily?.(null)}
+                          >
+                            Volver a Otros
+                          </Button>
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 rounded-lg border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 hover:text-slate-900"
+                          onClick={clearDetail}
+                        >
+                          Volver a familias
+                        </Button>
+                      </div>
+                    </div>
+
+                    {productsData?.slice(0, 5).map((item) => (
+                      <div key={item.name} className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-950">
+                          <span className="truncate">{item.name.replace(/\s*[pP]roducto\s*$/, "").trim()}</span>
+                          <span className="shrink-0 whitespace-nowrap text-slate-600">{formatVolume(item.value)}</span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                           <div
                             className="h-full rounded-full transition-all"
                             style={{
@@ -436,34 +417,47 @@ export function FamilyPieChart({
                         </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-              ) : selectedOther ? (
-                /* Families Included in Otros List */
-                <div className="flex flex-col space-y-3">
-                  {/* Children List */}
-                  <div className="space-y-3">
-                    {safeData.find(item => item.name === "Otros")?.children?.slice(0, 5).map((item) => (
+                  </>
+                )}
+
+                {showOtherFamiliesDetail && (
+                  <>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <CardTitle className="text-sm font-semibold text-slate-950">Familias incluidas en Otros</CardTitle>
+                        <CardDescription className="mt-1 text-xs text-slate-500">
+                          Familias fuera del Top 5
+                        </CardDescription>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-lg border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 hover:text-slate-900"
+                        onClick={clearDetail}
+                      >
+                        Volver a familias
+                      </Button>
+                    </div>
+
+                    {otrosChildren.slice(0, 5).map((item) => (
                       <div
                         key={item.name}
                         onClick={() => onSelectOtherFamily?.(item.name)}
-                        className="p-2 rounded-lg transition-all border border-transparent hover:bg-slate-50 cursor-pointer"
+                        className="cursor-pointer rounded-lg border border-transparent p-2 transition-all hover:bg-slate-50"
                       >
                         <div className="flex items-start gap-2.5 text-sm">
-                          {/* Color indicator */}
                           <span
-                            className="h-3 w-3 rounded-full mt-1.5 shrink-0"
+                            className="mt-1.5 h-3 w-3 shrink-0 rounded-full"
                             style={{ backgroundColor: "#78716C" }}
                           />
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
                               <span className="font-semibold text-slate-900">{item.name}</span>
-                              <span className="text-xs font-semibold whitespace-nowrap text-slate-600 shrink-0">
-                                {formatVolume(item.value)} <span className="text-slate-300 mx-0.5">·</span> {item.percentage.toFixed(0)}%
+                              <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-slate-600">
+                                {formatVolume(item.value)} <span className="mx-0.5 text-slate-300">·</span> {item.percentage.toFixed(0)}%
                               </span>
                             </div>
-                            {/* Progress Bar */}
-                            <div className="mt-1.5 w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                               <div
                                 className="h-full rounded-full transition-all"
                                 style={{
@@ -476,99 +470,9 @@ export function FamilyPieChart({
                         </div>
                       </div>
                     ))}
-                    {(safeData.find(item => item.name === "Otros")?.children?.length ?? 0) > 5 && (
-                      <p className="text-[10px] text-slate-400 italic mt-2 text-center font-medium">
-                        Mostrando principales familias fuera del Top 5
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : selectedFamily ? (
-                /* Products List */
-                <div className="flex flex-col space-y-3">
-                  {/* Products List */}
-                  <div className="space-y-3">
-                    {productsData?.map((item) => (
-                      <div key={item.name} className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-950">
-                          <span className="truncate">{item.name.replace(/\s*[pP]roducto\s*$/, "").trim()}</span>
-                          <span className="text-slate-600 font-medium whitespace-nowrap">{formatVolume(item.value)}</span>
-                        </div>
-                        {/* Progress Bar */}
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${item.percentage}%`,
-                              backgroundColor: selectedFamilyColor,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                /* Families List */
-                <div className="flex flex-col space-y-3">
-                  {safeData.map((item, index) => {
-                    const color = item.name === "Otros"
-                      ? "#78716C"
-                      : MEAT_CHART_COLORS[index % (MEAT_CHART_COLORS.length - 1)];
-                    const isSelected = (item.name === "Otros" && selectedOther) || selectedFamily === item.name;
-                    const hasSelection = !!selectedFamily || selectedOther;
-
-                    return (
-                      <div
-                        key={item.name}
-                        onClick={() => handleItemClick(item.name)}
-                        className={`p-2 rounded-lg transition-all border ${
-                          isSelected
-                            ? "bg-red-50/70 border-red-200 shadow-xs"
-                            : hasSelection
-                            ? "border-transparent opacity-50 hover:opacity-80 cursor-pointer"
-                            : "border-transparent hover:bg-slate-50 cursor-pointer"
-                        }`}
-                      >
-                        {/* Color dot + Name & Volume/Pct */}
-                        <div className="flex items-start gap-2.5 text-sm">
-                          {/* Color indicator */}
-                          <span
-                            className="h-3 w-3 rounded-full mt-1.5 shrink-0"
-                            style={{ backgroundColor: color }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <span className={`transition-colors ${isSelected ? "font-bold text-red-950" : "font-semibold text-slate-900"}`}>
-                                {item.name}
-                              </span>
-                              <span className={`text-xs font-semibold whitespace-nowrap transition-colors ${isSelected ? "text-red-700" : "text-slate-600"} shrink-0`}>
-                                {formatVolume(item.value)} <span className="text-slate-300 mx-0.5">·</span> {item.percentage.toFixed(0)}%
-                              </span>
-                            </div>
-                            {/* Progress Bar */}
-                            <div className="mt-1.5 w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <div
-                                className="h-full rounded-full transition-all"
-                                style={{
-                                  width: `${item.percentage}%`,
-                                  backgroundColor: color,
-                                }}
-                              />
-                            </div>
-                            {item.name === "Otros" && showOtrosMessage && (
-                              <p className="mt-1 text-[10px] text-amber-600 font-medium">
-                                Otros agrupa varias familias.
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
           </div>
         )}
       </CardContent>

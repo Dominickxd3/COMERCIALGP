@@ -225,6 +225,16 @@ function resolveInitialWeek(
   return availableWeeks.at(-1) ?? "Todas";
 }
 
+function sameFilters(a: DashboardFilters, b: DashboardFilters) {
+  return (
+    a.year === b.year &&
+    a.mes === b.mes &&
+    a.semana === b.semana &&
+    a.origin === b.origin &&
+    a.version === b.version
+  );
+}
+
 // ─── CalendarPicker ───────────────────────────────────────────────────────────
 
 function CalendarPicker({
@@ -357,7 +367,7 @@ function HeaderActions({
     ? (!draft.semana ? "Sem." : draft.semana === "Todas" ? "Todas" : `S${draft.semana}`)
     : (!draft.semana ? "Semana" : draft.semana === "Todas" ? "Sem. Todas" : `Sem. ${draft.semana}`);
 
-  const busy = isRefreshing || isLoading;
+  const busy = isRefreshing;
 
   return (
     <div className="flex w-full items-center justify-between gap-2 py-1 md:w-auto md:justify-end">
@@ -511,12 +521,26 @@ export default function HomePage() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+  const [debouncedFilters, setDebouncedFilters] = useState<DashboardFilters>({
+    year: "",
+    mes: "Todos",
+    semana: "Todas",
+    version: currentDefaults.date,
+    origin: "GP",
+  });
 
   // ── AbortController ref — cancel in-flight requests on new filter ──
   const abortRef = useRef<AbortController | null>(null);
 
   // ── In-memory cache keyed by "year|mes|semana|origin" ──
   const cacheRef = useRef<Map<string, DashboardResponse>>(new Map());
+  const currentDraftRef = useRef<DashboardFilters>({
+    year: "",
+    mes: "Todos",
+    semana: "Todas",
+    version: currentDefaults.date,
+    origin: "GP",
+  });
 
   // ────────────────────────────────────────────────────────────────────────────
   // applyResolvedDashboard
@@ -569,7 +593,9 @@ export default function HomePage() {
       };
 
       setAppliedFilters(resolved);
-      setFilterDraft(resolved);
+      if (isInit || !sameFilters(currentDraftRef.current, resolved)) {
+        setFilterDraft(resolved);
+      }
       setDashboard(response);
       setAvailableYears(response.options.years);
       setAvailableMonths(response.options.periods);
@@ -680,18 +706,30 @@ export default function HomePage() {
     return () => { cancelled = true; };
   }, [applyResolvedDashboard, currentDefaults.date]);
 
+  useEffect(() => {
+    currentDraftRef.current = filterDraft;
+  }, [filterDraft]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedFilters(filterDraft);
+    }, 180);
+
+    return () => clearTimeout(timeoutId);
+  }, [filterDraft]);
+
   // ────────────────────────────────────────────────────────────────────────────
   // React to filter changes (after initialization)
   // ────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!hasInitialized || !filterDraft.year) return;
-    void loadDashboard(filterDraft);
+    if (!hasInitialized || !debouncedFilters.year) return;
+    void loadDashboard(debouncedFilters);
   }, [
     hasInitialized,
-    filterDraft.year,
-    filterDraft.mes,
-    filterDraft.semana,
-    filterDraft.origin,
+    debouncedFilters.year,
+    debouncedFilters.mes,
+    debouncedFilters.semana,
+    debouncedFilters.origin,
     // version intentionally omitted — it's only relevant for refresh
   ]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -700,6 +738,9 @@ export default function HomePage() {
   // ────────────────────────────────────────────────────────────────────────────
   const handleDraftChange = useCallback((patch: Partial<DashboardFilters>) => {
     setRefreshError(null);
+    setSelectedFamily(null);
+    setSelectedOther(false);
+    setSelectedOtherFamily(null);
     setFilterDraft((current) => ({ ...current, ...patch }));
   }, []);
 

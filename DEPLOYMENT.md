@@ -1,10 +1,10 @@
-# ComercialGP - Despliegue Producción
+# ComercialGP - Despliegue Produccion
 
 ## Arquitectura
 
-10.10.1.3 = origen GP
-10.10.1.6 = SQL Server local/cache ComercialGP
-10.10.1.11 = servidor de aplicaciones Next.js
+10.10.1.3 = servidor origen GP  
+10.10.1.6 = SQL Server local/cache ComercialGP  
+10.10.1.11 = servidor de aplicaciones Next.js  
 
 La app solo se conecta a 10.10.1.6.
 
@@ -16,7 +16,7 @@ La app solo se conecta a 10.10.1.6.
 - NSSM instalado o disponible
 - Acceso de red a 10.10.1.6:1433
 
-## Validar conexión SQL desde 10.10.1.11
+## Validar conexion SQL desde 10.10.1.11
 
 PowerShell:
 
@@ -30,6 +30,14 @@ Debe devolver:
 TcpTestSucceeded : True
 ```
 
+## Preparar proyecto
+
+```bash
+git clone https://github.com/Dominickxd3/COMERCIALGP.git
+cd COMERCIALGP
+git checkout feature/nuevo-dashboard
+```
+
 ## Preparar variables de entorno
 
 Copiar:
@@ -40,37 +48,83 @@ como:
 
 `.env.production`
 
-y completar credenciales reales.
+Completar credenciales reales en el servidor.
 
-## Build
+No subir `.env.production` al repositorio.
+
+## Instalar dependencias
 
 ```bash
 npm install
+```
+
+## Validar entorno
+
+```bash
 npm run check:env
+```
+
+## Build produccion
+
+```bash
 npm run build
+```
+
+## Crear carpeta de logs
+
+```powershell
+mkdir logs
 ```
 
 ## Crear Servicio Windows con NSSM
 
-Ejemplo usando NSSM:
+Ejecutar en PowerShell o CMD como administrador:
 
 ```cmd
 nssm install ComercialGP
 ```
 
-Configurar en la UI de NSSM:
+Configurar:
 
-* **Application:** `C:\Program Files\nodejs\node.exe`
-* **Arguments:** `node_modules/next/dist/bin/next start -p 3000`
-* **Startup directory:** `D:\COMERCIAL_WEB_GERENCIA`
-* **Environment:**
-  ```text
-  NODE_ENV=production
-  PORT=3000
-  ```
+Application:  
+`C:\Program Files\nodejs\node.exe`
 
-También asegurar que el archivo `.env.production` exista en:
+Arguments:  
+`node_modules/next/dist/bin/next start -p 3000`
+
+Startup directory:  
+`D:\COMERCIAL_WEB_GERENCIA`
+
+Environment:
+
+```text
+NODE_ENV=production
+PORT=3000
+```
+
+Asegurar que exista:
+
 `D:\COMERCIAL_WEB_GERENCIA\.env.production`
+
+Comandos equivalentes por linea:
+
+```cmd
+nssm install ComercialGP "C:\Program Files\nodejs\node.exe" "node_modules/next/dist/bin/next start -p 3000"
+nssm set ComercialGP AppDirectory D:\COMERCIAL_WEB_GERENCIA
+nssm set ComercialGP AppEnvironmentExtra NODE_ENV=production PORT=3000
+nssm set ComercialGP AppStdout D:\COMERCIAL_WEB_GERENCIA\logs\comercialgp-out.log
+nssm set ComercialGP AppStderr D:\COMERCIAL_WEB_GERENCIA\logs\comercialgp-error.log
+nssm set ComercialGP AppRotateFiles 1
+nssm set ComercialGP Start SERVICE_AUTO_START
+```
+
+## Configurar logs NSSM
+
+stdout:  
+`D:\COMERCIAL_WEB_GERENCIA\logs\comercialgp-out.log`
+
+stderr:  
+`D:\COMERCIAL_WEB_GERENCIA\logs\comercialgp-error.log`
 
 ## Iniciar servicio
 
@@ -96,33 +150,30 @@ nssm restart ComercialGP
 nssm status ComercialGP
 ```
 
-## Logs
-
-Configurar en NSSM:
-
-* **stdout:** `D:\COMERCIAL_WEB_GERENCIA\logs\comercialgp-out.log`
-* **stderr:** `D:\COMERCIAL_WEB_GERENCIA\logs\comercialgp-error.log`
-
-Crear carpeta:
-
-`D:\COMERCIAL_WEB_GERENCIA\logs`
-
 ## URL temporal
 
 http://10.10.1.11:3000
 
-## Validación funcional
+## Validacion funcional
 
 Probar:
 - 2026 / Jun / S25 / GP
-- Debe mostrar volumen aproximado 160 t
+- Debe mostrar volumen aproximado 160 T
 - Debe mostrar valor venta aproximado S/ 1.40M
+- Cambiar Semana a Todos no debe cambiar Mes
+- Cambiar Mes a Todos debe poner Semana en Todos
+- Origen default debe ser GP
+- Origen Todos debe sumar GP + TDA
+- Refresh debe mostrar barra de carga
+- No debe aparecer pantalla vacia durante carga
+- No debe duplicarse Otros
 
 ## Actualizar despliegue
 
 ```bash
-git pull origin master
+git pull origin feature/nuevo-dashboard
 npm install
+npm run check:env
 npm run build
 nssm restart ComercialGP
 ```
@@ -133,10 +184,16 @@ Si no conecta a SQL:
 - validar firewall 10.10.1.11 -> 10.10.1.6 puerto 1433
 - validar usuario SQL
 - validar variables .env.production
+- validar que no se use NEXT_PUBLIC para credenciales SQL
 
-Si la app carga versión vieja:
+Si la app carga version vieja:
 - ejecutar npm run build
 - reiniciar servicio ComercialGP
 
 Si refresh falla:
 - validar permisos EXECUTE sobre dbo.sp_WEB_Refrescar_VentasNetasUtilidades
+- validar que la app se conecte a 10.10.1.6, no a 10.10.1.3
+
+Si aparece Otros duplicado:
+- validar que backend no devuelva Otros sintetico
+- validar que frontend filtre cualquier item con name OTROS antes de recalcular Top 5 + Otros

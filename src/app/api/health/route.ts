@@ -11,17 +11,16 @@ export async function GET() {
     return NextResponse.json({
       status: "ok",
       app: "ComercialGP",
-      database: "connected"
+      database: "connected",
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         status: "error",
         app: "ComercialGP",
         database: "disconnected",
-        message: error instanceof Error ? error.message : "Error desconocido"
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
