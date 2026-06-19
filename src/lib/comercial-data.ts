@@ -532,37 +532,7 @@ export async function getDashboardData(filters: DashboardFilters): Promise<Dashb
     }))
     .sort((a, b) => b.kilos - a.kilos);
 
-  const topFamilies: typeof sortedFamilies = [];
-  const restFamilies: typeof sortedFamilies = [];
-
-  for (let i = 0; i < sortedFamilies.length; i++) {
-    const item = sortedFamilies[i];
-    if (i < 5 || item.name.toUpperCase() === "CERDO") {
-      topFamilies.push(item);
-    } else {
-      restFamilies.push(item);
-    }
-  }
-
-  if (restFamilies.length > 0) {
-    const restKilos = restFamilies.reduce((sum, item) => sum + item.kilos, 0);
-    topFamilies.push({
-      name: "Otros",
-      kilos: restKilos,
-      toneladas: toToneladas(restKilos),
-    });
-  }
-
-  const uniqueFamilies: typeof sortedFamilies = [];
-  const seenNames = new Set<string>();
-  for (const item of topFamilies) {
-    if (!seenNames.has(item.name)) {
-      seenNames.add(item.name);
-      uniqueFamilies.push(item);
-    }
-  }
-
-  const familyChartData = uniqueFamilies.map((item) => ({
+  const familyChartData = sortedFamilies.map((item) => ({
     ...item,
     percentage: totalKilos > 0 ? (item.kilos / totalKilos) * 100 : 0,
   }));

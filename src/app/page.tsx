@@ -837,10 +837,13 @@ export default function HomePage() {
   const kilosPieData = useMemo<PieChartItem[]>(() => {
     if (!dashboard || !dashboard.families) return [];
 
-    // 1. Agrupar por Familia (name) y sumar kilos
+    // 1. Agrupar por Familia (name) y sumar kilos (excluyendo "Otros" si viniera)
     const groupedMap = new Map<string, number>();
     dashboard.families.forEach((item) => {
       const name = item.name.trim();
+      if (!name || name.toUpperCase() === "OTROS") {
+        return;
+      }
       const currentVal = groupedMap.get(name) || 0;
       groupedMap.set(name, currentVal + item.kilos);
     });
@@ -858,32 +861,37 @@ export default function HomePage() {
       return sortedFamilies.map((item) => ({
         name: item.name,
         value: item.kilos,
-        percentage: (item.kilos / totalKilos) * 100,
+        percentage: totalKilos > 0 ? (item.kilos / totalKilos) * 100 : 0,
+        isOther: false,
       }));
     }
 
     // 4. Si hay más de 5 familias, tomar Top 5 y agrupar las restantes en "Otros"
     const top5 = sortedFamilies.slice(0, 5);
-    const remaining = sortedFamilies.slice(5);
-    const otrosKilos = remaining.reduce((sum, item) => sum + item.kilos, 0);
+    const otherFamilies = sortedFamilies.slice(5);
 
     const result: PieChartItem[] = top5.map((item) => ({
       name: item.name,
       value: item.kilos,
-      percentage: (item.kilos / totalKilos) * 100,
+      percentage: totalKilos > 0 ? (item.kilos / totalKilos) * 100 : 0,
+      isOther: false,
     }));
 
-    result.push({
-      name: "Otros",
-      value: otrosKilos,
-      percentage: (otrosKilos / totalKilos) * 100,
-      isOther: true,
-      children: remaining.map((item) => ({
-        name: item.name,
-        value: item.kilos,
-        percentage: (item.kilos / totalKilos) * 100,
-      })),
-    });
+    if (otherFamilies.length > 0) {
+      const otrosKilos = otherFamilies.reduce((sum, item) => sum + item.kilos, 0);
+
+      result.push({
+        name: "Otros",
+        value: otrosKilos,
+        percentage: totalKilos > 0 ? (otrosKilos / totalKilos) * 100 : 0,
+        isOther: true,
+        children: otherFamilies.map((item) => ({
+          name: item.name,
+          value: item.kilos,
+          percentage: totalKilos > 0 ? (item.kilos / totalKilos) * 100 : 0,
+        })),
+      });
+    }
 
     return result;
   }, [dashboard]);

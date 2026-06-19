@@ -204,25 +204,43 @@ export function FamilyPieChart({
   onSelectOtherFamily,
   productsData
 }: FamilyPieChartProps) {
-  const hasData = data && data.length > 0;
   const isMobile = useIsMobile();
   const [showOtrosMessage, setShowOtrosMessage] = useState(false);
 
+  const safeData = useMemo(() => {
+    if (!data) return [];
+    const seen = new Set<string>();
+    return data.filter((item) => {
+      const key = item.name.trim().toUpperCase();
+      if (!key) return false;
+      if (key === "OTROS") {
+        if (seen.has("OTROS")) return false;
+        seen.add("OTROS");
+        return true;
+      }
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [data]);
+
+  const hasData = safeData && safeData.length > 0;
+
   // Calculate total volume for the center label
   const totalVolumeText = useMemo(() => {
-    if (!data) return "0 t";
-    const totalKg = data.reduce((sum, item) => sum + item.value, 0);
+    if (!safeData || safeData.length === 0) return "0 K";
+    const totalKg = safeData.reduce((sum, item) => sum + item.value, 0);
     return formatVolume(totalKg);
-  }, [data]);
+  }, [safeData]);
 
   const selectedFamilyColor = useMemo(() => {
     const activeFamily = selectedOtherFamily ?? selectedFamily;
     if (!activeFamily) return "#78716C";
-    const idx = data.findIndex((item) => item.name === activeFamily);
+    const idx = safeData.findIndex((item) => item.name === activeFamily);
     if (idx === -1) return "#78716C";
-    const isOtros = data[idx].name === "Otros";
+    const isOtros = safeData[idx].name === "Otros";
     return isOtros ? "#78716C" : MEAT_CHART_COLORS[idx % (MEAT_CHART_COLORS.length - 1)];
-  }, [selectedFamily, selectedOtherFamily, data]);
+  }, [selectedFamily, selectedOtherFamily, safeData]);
 
   const handleItemClick = (name: string) => {
     if (name === "Otros") {
@@ -340,7 +358,7 @@ export function FamilyPieChart({
                     <PieChart className="overflow-visible" margin={{ top: 24, right: 44, bottom: 24, left: 44 }}>
                       <Pie
                         isAnimationActive={false}
-                        data={data}
+                        data={safeData}
                         cx="50%"
                         cy="50%"
                         labelLine={!isMobile}
@@ -356,7 +374,7 @@ export function FamilyPieChart({
                           }
                         }}
                       >
-                        {data.map((entry, index) => {
+                        {safeData.map((entry, index) => {
                           const baseColor = entry.name === "Otros"
                             ? "#78716C"
                             : MEAT_CHART_COLORS[index % (MEAT_CHART_COLORS.length - 1)];
@@ -425,7 +443,7 @@ export function FamilyPieChart({
                 <div className="flex flex-col space-y-3">
                   {/* Children List */}
                   <div className="space-y-3">
-                    {data.find(item => item.name === "Otros")?.children?.slice(0, 5).map((item) => (
+                    {safeData.find(item => item.name === "Otros")?.children?.slice(0, 5).map((item) => (
                       <div
                         key={item.name}
                         onClick={() => onSelectOtherFamily?.(item.name)}
@@ -458,7 +476,7 @@ export function FamilyPieChart({
                         </div>
                       </div>
                     ))}
-                    {(data.find(item => item.name === "Otros")?.children?.length ?? 0) > 5 && (
+                    {(safeData.find(item => item.name === "Otros")?.children?.length ?? 0) > 5 && (
                       <p className="text-[10px] text-slate-400 italic mt-2 text-center font-medium">
                         Mostrando principales familias fuera del Top 5
                       </p>
@@ -493,7 +511,7 @@ export function FamilyPieChart({
               ) : (
                 /* Families List */
                 <div className="flex flex-col space-y-3">
-                  {data.map((item, index) => {
+                  {safeData.map((item, index) => {
                     const color = item.name === "Otros"
                       ? "#78716C"
                       : MEAT_CHART_COLORS[index % (MEAT_CHART_COLORS.length - 1)];
