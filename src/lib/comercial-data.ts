@@ -36,12 +36,15 @@ export type ProductChartItem = {
   toneladas: number;
 };
 
+export type TopProductsByFamily = Record<string, ProductChartItem[]>;
+
 export type DashboardDataResult = {
   totalKilos: number;
   totalToneladas: number;
   totalVenta: number;
   familyChartData: FamilyChartItem[];
   productsBySelectedFamily: ProductChartItem[];
+  topProductsByFamily: TopProductsByFamily;
   availableYears: string[];
   availablePeriods: string[];
   availableWeeks: string[];
@@ -99,6 +102,12 @@ function normalizeOrigin(origin?: string | null) {
 function normalizeFamily(family?: string | null) {
   if (!family) return "";
   return family.trim();
+}
+
+function getProductDisplayName(row: CommercialRow) {
+  const productMarca = row.ProductoMarca?.trim();
+  if (productMarca) return productMarca;
+  return row.Producto?.trim() ?? "";
 }
 
 function parseDateKey(dateKey: string) {
@@ -380,6 +389,7 @@ export async function getDashboardData(filters: DashboardFilters): Promise<Dashb
       totalVenta: 0,
       familyChartData: [],
       productsBySelectedFamily: [],
+      topProductsByFamily: {},
       availableYears: [],
       availablePeriods: [],
       availableWeeks: [],
@@ -537,20 +547,26 @@ export async function getDashboardData(filters: DashboardFilters): Promise<Dashb
     percentage: totalKilos > 0 ? (item.kilos / totalKilos) * 100 : 0,
   }));
 
-  const selectedFamily = normalizeFamily(filters.family);
-  let productsBySelectedFamily: ProductChartItem[] = [];
+  const topProductsByFamily: TopProductsByFamily = {};
+  const productMapsByFamily = new Map<string, Map<string, number>>();
 
-  if (selectedFamily) {
-    const productMap = new Map<string, number>();
-    for (const row of filteredRows) {
-      if (row.Familia?.trim() !== selectedFamily) continue;
-      const product = row.Producto?.trim();
-      if (!product) continue;
-      productMap.set(product, (productMap.get(product) ?? 0) + safeNumber(row.VEN_KGS));
+  for (const row of filteredRows) {
+    const family = row.Familia?.trim();
+    const product = getProductDisplayName(row);
+    if (!family || !product) continue;
+
+    let familyProducts = productMapsByFamily.get(family);
+    if (!familyProducts) {
+      familyProducts = new Map<string, number>();
+      productMapsByFamily.set(family, familyProducts);
     }
 
-    productsBySelectedFamily = [...productMap.entries()]
-      .map(([name, kilos]: [string, number]) => ({
+    familyProducts.set(product, (familyProducts.get(product) ?? 0) + safeNumber(row.VEN_KGS));
+  }
+
+  for (const [family, productsMap] of productMapsByFamily.entries()) {
+    topProductsByFamily[family] = [...productsMap.entries()]
+      .map(([name, kilos]) => ({
         name,
         kilos,
         toneladas: toToneladas(kilos),
@@ -559,12 +575,18 @@ export async function getDashboardData(filters: DashboardFilters): Promise<Dashb
       .slice(0, 5);
   }
 
+  const selectedFamily = normalizeFamily(filters.family);
+  const productsBySelectedFamily = selectedFamily
+    ? (topProductsByFamily[selectedFamily] ?? [])
+    : [];
+
   return {
     totalKilos,
     totalToneladas,
     totalVenta,
     familyChartData,
     productsBySelectedFamily,
+    topProductsByFamily,
     availableYears,
     availablePeriods,
     availableWeeks,
@@ -590,7 +612,7 @@ export async function refreshCommercialData(filters: DashboardFilters) {
   const resolvedBeforeRefresh = await getDashboardData(filters);
   const year = resolvedBeforeRefresh.resolvedFilters.year;
   const period = normalizePeriod(resolvedBeforeRefresh.resolvedFilters.period);
-  const date = normalizeDate(resolvedBeforeRefresh.resolvedFilters.date);
+  const date = normalizeDate(filters.date) || normalizeDate(resolvedBeforeRefresh.resolvedFilters.date);
   const shouldExecuteRefresh = Boolean(year && period !== "Todos" && date);
   const periodSql = toSqlPeriod(year, period);
 
@@ -599,6 +621,7 @@ export async function refreshCommercialData(filters: DashboardFilters) {
     await pool.request()
       .input("Periodo", sql.VarChar(6), `${year}${period}`)
       .input("Fecha", sql.VarChar(8), date)
+      .input("EjecutarSPRemoto", sql.Bit, true)
       .execute(REFRESH_SP);
   }
 

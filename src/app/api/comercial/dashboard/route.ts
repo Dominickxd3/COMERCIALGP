@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
       },
       families: data.familyChartData,
       products: data.productsBySelectedFamily,
+      topProductsByFamily: data.topProductsByFamily,
       options: {
         years: data.availableYears,
         periods: data.availablePeriods,

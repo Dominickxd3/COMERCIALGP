@@ -24,6 +24,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useHeaderActions } from "@/components/layout/header-actions-context";
 import { FamilyPieChart, formatVolume } from "@/components/comercial/FamilyPieChart";
 import { getDefaultCommercialFilters } from "@/lib/comercial-default-filters";
+import { showRefreshError, showRefreshSuccess, showRefreshWarning } from "@/lib/alerts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -52,6 +53,11 @@ type DashboardResponse = {
     kilos: number;
     toneladas: number;
   }>;
+  topProductsByFamily: Record<string, Array<{
+    name: string;
+    kilos: number;
+    toneladas: number;
+  }>>;
   options: {
     years: string[];
     periods: string[];
@@ -80,6 +86,7 @@ type RefreshResponse = {
   kpis: DashboardResponse["kpis"];
   families: DashboardResponse["families"];
   products: DashboardResponse["products"];
+  topProductsByFamily: DashboardResponse["topProductsByFamily"];
   options: DashboardResponse["options"];
   resolvedFilters: DashboardResponse["resolvedFilters"];
   error?: string;
@@ -786,6 +793,7 @@ export default function HomePage() {
         kpis: response.kpis,
         families: response.families,
         products: response.products,
+        topProductsByFamily: response.topProductsByFamily,
         options: response.options,
         resolvedFilters: response.resolvedFilters,
       };
@@ -793,7 +801,16 @@ export default function HomePage() {
       // Cache the fresh response
       cacheRef.current.set(cacheKey(newApplied), dashboardResponse);
       applyResolvedDashboard(dashboardResponse, newApplied);
-      setRefreshError(response.warning);
+      const hasDashboardData =
+        dashboardResponse.kpis.totalKilos > 0 ||
+        dashboardResponse.kpis.totalVenta > 0 ||
+        dashboardResponse.families.length > 0;
+
+      if (hasDashboardData) {
+        void showRefreshSuccess("Datos actualizados correctamente.");
+      } else if (response.warning) {
+        void showRefreshWarning(response.warning);
+      }
     } catch (error) {
       setRefreshError(error instanceof Error ? error.message : "No se pudo actualizar la información.");
     } finally {
@@ -801,36 +818,10 @@ export default function HomePage() {
     }
   }, [applyResolvedDashboard, filterDraft, isRefreshing]);
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // Load products when a family is selected
-  // ── Load products when a family is selected ──
   useEffect(() => {
-    const family = selectedOtherFamily ?? selectedFamily;
-    if (!hasInitialized || !family || family === "Otros") return;
-    let cancelled = false;
-
-    async function loadFamilyProducts() {
-      try {
-        const params = new URLSearchParams({
-          year:   appliedFilters.year,
-          period: appliedFilters.mes,
-          week:   appliedFilters.semana,
-          origin: appliedFilters.origin,
-          family: family ?? "",
-        });
-        const response = await fetchJson<DashboardResponse>(
-          `/api/comercial/dashboard?${params.toString()}`,
-        );
-        if (cancelled) return;
-        setDashboard((prev) => prev ? { ...prev, products: response.products } : response);
-      } catch {
-        // keep current products
-      }
-    }
-
-    void loadFamilyProducts();
-    return () => { cancelled = true; };
-  }, [selectedFamily, selectedOtherFamily, appliedFilters, hasInitialized]);
+    if (!refreshError || !isRefreshing) return;
+    void showRefreshError(refreshError);
+  }, [refreshError, isRefreshing]);
 
   // ────────────────────────────────────────────────────────────────────────────
   // Mount header actions
@@ -950,8 +941,9 @@ export default function HomePage() {
   const productsPieData = useMemo<ProductItem[]>(() => {
     const activeFamily = selectedOtherFamily ?? selectedFamily;
     if (!dashboard || !activeFamily) return [];
-    const total = dashboard.products.reduce((s, i) => s + i.kilos, 0);
-    return dashboard.products.map((item) => ({
+    const familyProducts = dashboard.topProductsByFamily?.[activeFamily] ?? [];
+    const total = familyProducts.reduce((s, i) => s + i.kilos, 0);
+    return familyProducts.map((item) => ({
       name: item.name,
       value: item.kilos,
       percentage: total > 0 ? (item.kilos / total) * 100 : 0,
@@ -1034,11 +1026,6 @@ export default function HomePage() {
             )}
           </div>
         </div>
-
-        {/* Error / warning banner */}
-        {refreshError ? (
-          <p className="text-sm text-rose-600">{refreshError}</p>
-        ) : null}
       </div>
 
       {/* ── Content area ── */}

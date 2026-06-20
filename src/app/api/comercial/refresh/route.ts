@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     const warning =
       result.executed && result.rowsAfterRefresh === 0
-        ? "El refresh ejecutó, pero no se insertaron datos para el periodo/fecha."
+        ? "No se generaron datos para esta version. Se mantiene la ultima version disponible."
         : null;
 
     if (process.env.NODE_ENV !== "production") {
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      ok: !warning,
+      ok: true,
       executedRefresh: result.executed,
       periodo: result.periodo,
       fecha: result.fecha,
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       },
       families: result.data.familyChartData,
       products: result.data.productsBySelectedFamily,
+      topProductsByFamily: result.data.topProductsByFamily,
       options: {
         years: result.data.availableYears,
         periods: result.data.availablePeriods,
@@ -59,11 +60,11 @@ export async function POST(request: Request) {
       },
       resolvedFilters: result.data.resolvedFilters,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Failed to refresh commercial data.",
+        error: "No se pudo actualizar. Intenta nuevamente.",
       },
       { status: 500 },
     );
