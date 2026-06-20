@@ -1094,7 +1094,7 @@ export default function HomePage() {
           {/* Family pie chart */}
           <div className="w-full">
             <FamilyPieChart
-              title="Top 5 familias"
+              title="Participación por familia Top 5 familias"
               subtitle={pieSubtitle}
               data={kilosPieData}
               selectedFamily={selectedFamily}

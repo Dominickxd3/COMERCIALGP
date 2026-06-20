@@ -75,7 +75,7 @@ function formatExternalLabel(name: string, percentage: number, isMobile: boolean
     return "";
   }
 
-  const maxLength = isMobile ? 10 : 12;
+  const maxLength = isMobile ? 11 : 13;
   const compactName = name.length > maxLength ? `${name.slice(0, maxLength - 3).trim()}...` : name;
   return `${compactName} ${percentage.toFixed(0)}%`;
 }
@@ -108,14 +108,14 @@ const renderCustomizedLabel = ({
 
   const parsedWidth = typeof width === "number" ? width : (width ? parseFloat(width) : undefined);
   const svgWidth = parsedWidth || cx * 2;
-  const offset = isMobile ? 10 : 20;
+  const offset = isMobile ? 12 : 22;
   const startX = cx + outerRadius * Math.cos(-midAngle * RADIAN);
   const startY = cy + outerRadius * Math.sin(-midAngle * RADIAN);
   const endXRaw = cx + (outerRadius + offset) * Math.cos(-midAngle * RADIAN);
   const endY = cy + (outerRadius + offset) * Math.sin(-midAngle * RADIAN);
-  const charWidth = isMobile ? 6 : 7.5;
+  const charWidth = isMobile ? 5.8 : 7.2;
   const estimatedWidth = labelText.length * charWidth;
-  const safetyMargin = isMobile ? 6 : 10;
+  const safetyMargin = isMobile ? 8 : 12;
   const isLeft = endXRaw < cx;
 
   let endX = endXRaw;
@@ -251,8 +251,8 @@ export function FamilyPieChart({
     onSelectOtherFamily?.(null);
   };
 
-  const chartOuterRadius = isMobile ? 76 : 96;
-  const chartInnerRadius = isMobile ? 44 : 56;
+  const chartOuterRadius = isMobile ? 88 : 112;
+  const chartInnerRadius = isMobile ? 52 : 64;
 
   return (
     <Card className="flex flex-col space-y-6 border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -267,11 +267,11 @@ export function FamilyPieChart({
             <p className="text-sm text-slate-400">No hay informacion para el periodo seleccionado.</p>
           </div>
         ) : (
-          <div className="grid h-full w-full grid-cols-1 items-center gap-8 md:grid-cols-[400px_1fr]">
-              <div className="relative flex h-[260px] w-full items-center justify-center md:h-[300px]">
+          <div className="grid h-full w-full grid-cols-1 items-center gap-6 md:grid-cols-[430px_1fr]">
+              <div className="relative flex h-[290px] w-full items-center justify-center md:h-[330px]">
                 <div className="h-full w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart className="overflow-visible" margin={{ top: 24, right: 44, bottom: 24, left: 44 }}>
+                    <PieChart className="overflow-visible" margin={{ top: 18, right: 34, bottom: 18, left: 34 }}>
                       <Pie
                         isAnimationActive={false}
                         data={safeData}
@@ -324,11 +324,6 @@ export function FamilyPieChart({
               <div className="flex flex-col justify-center space-y-3 pr-2">
                 {!selectedFamily && !selectedOther && (
                   <>
-                    <div>
-                      <CardTitle className="text-sm font-semibold text-slate-950">{title}</CardTitle>
-                      <CardDescription className="mt-1 text-xs text-slate-500">{subtitle}</CardDescription>
-                    </div>
-
                     {safeData.map((item, index) => {
                       const color = item.name === "Otros"
                         ? "#78716C"
