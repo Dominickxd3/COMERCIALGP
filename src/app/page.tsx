@@ -536,6 +536,7 @@ export default function HomePage() {
   // ── Fetch status machine ──
   const [fetchStatus, setFetchStatus]     = useState<FetchStatus>("idle");
   const [isRefreshing, setIsRefreshing]   = useState(false);
+  const [refreshStage, setRefreshStage]   = useState<string | null>(null);
   const [refreshError, setRefreshError]   = useState<string | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
@@ -770,6 +771,7 @@ export default function HomePage() {
     if (isRefreshing || !filterDraft.year) return;
 
     setIsRefreshing(true);
+    setRefreshStage("Iniciando actualización…");
     setRefreshError(null);
     setHasAttemptedRefresh(true);
 
@@ -795,6 +797,8 @@ export default function HomePage() {
       console.timeEnd("refresh-start-request");
       console.time("poll-status");
 
+      setRefreshStage("Consultando estado…");
+
       const poll = async (): Promise<RefreshResponse> => {
         const res = await fetchJson<StatusResponse>(
           `/api/comercial/refresh/status?id=${jobId}`,
@@ -809,6 +813,8 @@ export default function HomePage() {
       };
 
       const response = await poll();
+
+      setRefreshStage("Actualizando dashboard…");
 
       const newApplied: DashboardFilters = {
         year:    response.resolvedFilters.year   || filterDraft.year,
@@ -841,6 +847,7 @@ export default function HomePage() {
         dashboardResponse.families.length > 0;
 
       if (hasDashboardData) {
+        setRefreshStage("Finalizando…");
         console.timeEnd("refresh-total-ui");
         void showRefreshSuccess("Datos actualizados correctamente.");
       } else if (response.warning) {
@@ -854,6 +861,7 @@ export default function HomePage() {
       }
     } finally {
       setIsRefreshing(false);
+      setRefreshStage(null);
     }
   }, [applyResolvedDashboard, filterDraft, isRefreshing]);
 
@@ -1066,6 +1074,24 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Refresh progress bar ── */}
+      {isRefreshing && (
+        <div className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-xs">
+          <div className="h-1 w-full bg-slate-100">
+            <div className="h-full w-full animate-[indeterminate_1.8s_ease-in-out_infinite] rounded-full bg-slate-900" />
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2.5">
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-500" />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-700">Actualizando información comercial…</p>
+              {refreshStage && (
+                <p className="text-[11px] text-slate-400">{refreshStage}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Content area ── */}
       {showEmptyState ? (
