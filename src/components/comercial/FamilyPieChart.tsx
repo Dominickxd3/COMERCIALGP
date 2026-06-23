@@ -269,7 +269,7 @@ export function FamilyPieChart({
         ) : (
           <div className="grid h-full w-full max-w-full grid-cols-1 items-center gap-6 lg:grid-cols-[minmax(0,430px)_1fr]">
               <div className="relative flex h-[260px] w-full max-w-full items-center justify-center sm:h-[290px] md:h-[330px]">
-                <div className="h-full w-full max-w-full overflow-hidden" style={{ minWidth: 0, minHeight: 0 }}>
+                <div className="h-full w-full max-w-full overflow-hidden">
                   <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                     <PieChart className="overflow-visible" margin={{ top: 18, right: 4, bottom: 18, left: 4 }}>
                       <Pie

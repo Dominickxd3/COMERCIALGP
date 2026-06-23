@@ -19,7 +19,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHeaderActions } from "@/components/layout/header-actions-context";
 import { FamilyPieChart, formatVolume } from "@/components/comercial/FamilyPieChart";
@@ -1011,22 +1011,21 @@ export default function HomePage() {
   return (
     <section className="w-full max-w-full min-w-0 overflow-x-hidden space-y-6 pb-6">
       {/* ── Title row ── */}
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
-              Ventas año {appliedFilters.year || "—"}
-            </h1>
-            {/* Inline loading badge — never shows blank screen */}
-            {isLoading && (
-              <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Actualizando…
-              </span>
-            )}
-          </div>
+      <div className="flex w-full items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <h1 className="truncate text-base font-bold tracking-tight text-slate-950 sm:text-lg">
+            Ventas año {appliedFilters.year || "—"}
+          </h1>
+          {/* Inline loading badge — never shows blank screen */}
+          {isLoading && (
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Actualizando…
+            </span>
+          )}
+        </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
             {isMobile ? (
               <Sheet open={isSelectorOpen} onOpenChange={setIsSelectorOpen}>
                 <SheetTrigger asChild>
@@ -1039,6 +1038,7 @@ export default function HomePage() {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="rounded-t-3xl bg-white p-4">
+                  <SheetTitle className="sr-only">Seleccionar fecha</SheetTitle>
                   <div className="flex justify-center py-2">
                     <CalendarPicker
                       key={currentDefaults.date}
@@ -1072,7 +1072,6 @@ export default function HomePage() {
             )}
           </div>
         </div>
-      </div>
 
       {/* ── Refresh progress bar ── */}
       {isRefreshing && (
