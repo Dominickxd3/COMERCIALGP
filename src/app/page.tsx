@@ -1009,12 +1009,12 @@ export default function HomePage() {
   // Render
   // ────────────────────────────────────────────────────────────────────────────
   return (
-    <section className="space-y-6 pb-6">
+    <section className="w-full max-w-full min-w-0 overflow-x-hidden space-y-6 pb-6">
       {/* ── Title row ── */}
       <div className="flex flex-col gap-2">
-        <div className="flex w-full flex-row items-center justify-between gap-4 border-b border-slate-100 pb-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-slate-950">
+            <h1 className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
               Ventas año {appliedFilters.year || "—"}
             </h1>
             {/* Inline loading badge — never shows blank screen */}
@@ -1026,8 +1026,7 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Calendar picker */}
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {isMobile ? (
               <Sheet open={isSelectorOpen} onOpenChange={setIsSelectorOpen}>
                 <SheetTrigger asChild>
@@ -1111,53 +1110,53 @@ export default function HomePage() {
       ) : (
         /* Data area — rendered even while isLoading (stale data stays visible) */
         <div
-          className={`space-y-6 transition-opacity duration-200 ${
+          className={`w-full max-w-full min-w-0 space-y-6 transition-opacity duration-200 ${
             isLoading ? "opacity-60 pointer-events-none" : "opacity-100"
           }`}
         >
           {/* KPI cards */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Card className="border-slate-200 bg-white shadow-sm">
-              <CardContent className="p-6">
+            <Card className="w-full max-w-full min-w-0 border-slate-200 bg-white shadow-sm">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50">
-                    <Weight className="h-5 w-5 text-emerald-600" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 sm:h-10 sm:w-10">
+                    <Weight className="h-4 w-4 text-emerald-600 sm:h-5 sm:w-5" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:text-xs">
                       VOLUMEN VENDIDO
                     </p>
-                    <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
+                    <p className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
                       {formatVolume(dashboard?.kpis.totalKilos ?? 0)}
                     </p>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-slate-400">Volumen vendido del periodo seleccionado</p>
+                <p className="mt-2 text-[11px] text-slate-400 sm:mt-3 sm:text-xs">Volumen vendido del periodo seleccionado</p>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200 bg-white shadow-sm">
-              <CardContent className="p-6">
+            <Card className="w-full max-w-full min-w-0 border-slate-200 bg-white shadow-sm">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50">
-                    <DollarSign className="h-5 w-5 text-blue-600" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 sm:h-10 sm:w-10">
+                    <DollarSign className="h-4 w-4 text-blue-600 sm:h-5 sm:w-5" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:text-xs">
                       VALOR VENTA
                     </p>
-                    <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
+                    <p className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
                       {fmtCurrency(dashboard?.kpis.totalVenta ?? 0)}
                     </p>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-slate-400">Valor vendido del periodo seleccionado</p>
+                <p className="mt-2 text-[11px] text-slate-400 sm:mt-3 sm:text-xs">Valor vendido del periodo seleccionado</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Family pie chart */}
-          <div className="w-full">
+          <div className="w-full max-w-full min-w-0 overflow-hidden">
             <FamilyPieChart
               title="Participación por familia Top 5 familias"
               subtitle={pieSubtitle}

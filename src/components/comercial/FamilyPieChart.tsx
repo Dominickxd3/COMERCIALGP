@@ -255,7 +255,7 @@ export function FamilyPieChart({
   const chartInnerRadius = isMobile ? 52 : 64;
 
   return (
-    <Card className="flex flex-col space-y-6 border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <Card className="flex w-full max-w-full min-w-0 flex-col space-y-6 border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="border-b border-slate-100 pb-4">
         <CardTitle className="text-sm font-semibold text-slate-950">{title}</CardTitle>
         <CardDescription className="mt-1 text-xs text-slate-500">{subtitle}</CardDescription>
@@ -267,11 +267,11 @@ export function FamilyPieChart({
             <p className="text-sm text-slate-400">No hay informacion para el periodo seleccionado.</p>
           </div>
         ) : (
-          <div className="grid h-full w-full grid-cols-1 items-center gap-6 md:grid-cols-[430px_1fr]">
-              <div className="relative flex h-[290px] w-full items-center justify-center md:h-[330px]">
-                <div className="h-full w-full" style={{ minWidth: 0, minHeight: 0 }}>
+          <div className="grid h-full w-full max-w-full grid-cols-1 items-center gap-6 lg:grid-cols-[minmax(0,430px)_1fr]">
+              <div className="relative flex h-[260px] w-full max-w-full items-center justify-center sm:h-[290px] md:h-[330px]">
+                <div className="h-full w-full max-w-full overflow-hidden" style={{ minWidth: 0, minHeight: 0 }}>
                   <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-                    <PieChart className="overflow-visible" margin={{ top: 18, right: 34, bottom: 18, left: 34 }}>
+                    <PieChart className="overflow-visible" margin={{ top: 18, right: 4, bottom: 18, left: 4 }}>
                       <Pie
                         isAnimationActive={false}
                         data={safeData}
@@ -321,7 +321,7 @@ export function FamilyPieChart({
                 </div>
               </div>
 
-              <div className="flex flex-col justify-center space-y-3 pr-2">
+              <div className="flex min-w-0 flex-col justify-center space-y-3">
                 {!selectedFamily && !selectedOther && (
                   <>
                     {safeData.map((item, index) => {
