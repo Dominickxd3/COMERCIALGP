@@ -1,20 +1,17 @@
 import Swal from "sweetalert2";
 
-const sharedOptions = {
-  confirmButtonText: "Cerrar",
-  allowOutsideClick: true,
-  allowEscapeKey: true,
-  showConfirmButton: true,
+const toastOptions = {
+  toast: true,
+  position: "top-end" as const,
+  showConfirmButton: false,
   timerProgressBar: true,
-  heightAuto: false,
 };
 
 export function showRefreshSuccess(message = "Datos actualizados correctamente.") {
   return Swal.fire({
-    ...sharedOptions,
+    ...toastOptions,
     icon: "success",
-    title: "Actualizacion completa",
-    text: message,
+    title: message,
     timer: 2500,
   });
 }
@@ -23,20 +20,18 @@ export function showRefreshWarning(
   message = "No se encontraron datos nuevos. Se mantiene la ultima version disponible.",
 ) {
   return Swal.fire({
-    ...sharedOptions,
+    ...toastOptions,
     icon: "warning",
-    title: "Sin datos nuevos",
-    text: message,
+    title: message,
     timer: 3500,
   });
 }
 
 export function showRefreshError(message = "No se pudo actualizar. Intenta nuevamente.") {
   return Swal.fire({
-    ...sharedOptions,
+    ...toastOptions,
     icon: "error",
-    title: "Error al actualizar",
-    text: message,
+    title: message,
     timer: 4000,
   });
 }

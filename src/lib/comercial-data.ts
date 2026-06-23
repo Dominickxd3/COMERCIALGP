@@ -609,29 +609,35 @@ export async function getDashboardData(filters: DashboardFilters): Promise<Dashb
 }
 
 export async function refreshCommercialData(filters: DashboardFilters) {
-  const resolvedBeforeRefresh = await getDashboardData(filters);
-  const year = resolvedBeforeRefresh.resolvedFilters.year;
-  const period = normalizePeriod(resolvedBeforeRefresh.resolvedFilters.period);
-  const date = normalizeDate(filters.date) || normalizeDate(resolvedBeforeRefresh.resolvedFilters.date);
+  const year = String(filters.year || "").trim();
+  const period = normalizePeriod(filters.period);
+  const date = normalizeDate(filters.date);
   const shouldExecuteRefresh = Boolean(year && period !== "Todos" && date);
   const periodSql = toSqlPeriod(year, period);
 
+  let spDuration = 0;
   if (shouldExecuteRefresh) {
+    const spStart = performance.now();
     const pool = await getSqlPool();
     await pool.request()
       .input("Periodo", sql.VarChar(6), `${year}${period}`)
       .input("Fecha", sql.VarChar(8), date)
-      .input("EjecutarSPRemoto", sql.Bit, true)
+      .input("EjecutarSPRemoto", sql.Bit, false)
       .execute(REFRESH_SP);
+    spDuration = Math.round(performance.now() - spStart);
   }
 
+  const queryStart = performance.now();
   const data = await getDashboardData({
     ...filters,
     year,
     period,
     date,
   });
+  const queryDuration = Math.round(performance.now() - queryStart);
   const rowsAfterRefresh = data.debug.rowsByPeriodAndFecha;
+
+  console.info(`[TIMING] refresh SP=${spDuration}ms query=${queryDuration}ms total=${spDuration + queryDuration}ms periodo=${periodSql} fecha=${date} rows=${rowsAfterRefresh}`);
 
   return {
     executed: shouldExecuteRefresh,

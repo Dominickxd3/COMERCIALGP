@@ -78,18 +78,24 @@ type DashboardResponse = {
 
 type RefreshResponse = {
   ok: boolean;
-  executedRefresh: boolean;
-  periodo: string;
-  fecha: string;
-  rowsAfterRefresh: number;
-  warning: string | null;
+  state?: string;
+  executedRefresh?: boolean;
+  periodo?: string;
+  fecha?: string;
+  rowsAfterRefresh?: number;
+  warning?: string | null;
+  error?: string;
   kpis: DashboardResponse["kpis"];
   families: DashboardResponse["families"];
   products: DashboardResponse["products"];
   topProductsByFamily: DashboardResponse["topProductsByFamily"];
   options: DashboardResponse["options"];
   resolvedFilters: DashboardResponse["resolvedFilters"];
-  error?: string;
+};
+
+type StatusResponse = RefreshResponse & {
+  state: "pending" | "running" | "done" | "error";
+  warning?: string | null;
 };
 
 type PieChartItem = {
@@ -146,9 +152,15 @@ const WEEKDAYS = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"];
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmtCurrency(value: number) {
-  if (value >= 1_000_000) return `S/ ${(value / 1_000_000).toFixed(2)}M`;
-  if (value >= 1_000) return `S/ ${Math.round(value / 1_000)}K`;
-  return `S/ ${value.toFixed(0)}`;
+  if (value >= 1_000_000) {
+    const millones = value / 1_000_000;
+    const rounded = Math.round((millones + Number.EPSILON) * 10) / 10;
+    if (rounded === Math.floor(rounded)) {
+      return `S/ ${rounded.toLocaleString("es-PE")} millones`;
+    }
+    return `S/ ${rounded.toLocaleString("es-PE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} millones`;
+  }
+  return `S/ ${Math.round(value).toLocaleString("es-PE")}`;
 }
 
 function parseYyyymmdd(value: string) {
@@ -752,7 +764,7 @@ export default function HomePage() {
   }, []);
 
   // ────────────────────────────────────────────────────────────────────────────
-  // handleRefresh — the ONLY action that executes the SP
+  // handleRefresh — starts SP async, polls status, never blocks UI
   // ────────────────────────────────────────────────────────────────────────────
   const handleRefresh = useCallback(async () => {
     if (isRefreshing || !filterDraft.year) return;
@@ -761,18 +773,42 @@ export default function HomePage() {
     setRefreshError(null);
     setHasAttemptedRefresh(true);
 
+    console.time("refresh-total-ui");
+    console.time("refresh-start-request");
+
     try {
-      const response = await fetchJson<RefreshResponse>("/api/comercial/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          year:   filterDraft.year,
-          period: filterDraft.mes,
-          week:   filterDraft.semana,
-          date:   filterDraft.version,
-          origin: filterDraft.origin,
-        }),
-      });
+      const { jobId } = await fetchJson<{ ok: boolean; jobId: string }>(
+        "/api/comercial/refresh/start",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            year:   filterDraft.year,
+            period: filterDraft.mes,
+            week:   filterDraft.semana,
+            date:   filterDraft.version,
+            origin: filterDraft.origin,
+          }),
+        },
+      );
+
+      console.timeEnd("refresh-start-request");
+      console.time("poll-status");
+
+      const poll = async (): Promise<RefreshResponse> => {
+        const res = await fetchJson<StatusResponse>(
+          `/api/comercial/refresh/status?id=${jobId}`,
+        );
+        if (res.state === "done") {
+          console.timeEnd("poll-status");
+          return res;
+        }
+        if (res.state === "error") throw new Error(res.error || "Error en refresh");
+        await new Promise((r) => setTimeout(r, 2000));
+        return poll();
+      };
+
+      const response = await poll();
 
       const newApplied: DashboardFilters = {
         year:    response.resolvedFilters.year   || filterDraft.year,
@@ -782,7 +818,6 @@ export default function HomePage() {
         origin:  response.resolvedFilters.origin || filterDraft.origin,
       };
 
-      // Invalidate the cache for this filter combination so next read is fresh
       cacheRef.current.delete(cacheKey(newApplied));
 
       setSelectedFamily(null);
@@ -798,7 +833,6 @@ export default function HomePage() {
         resolvedFilters: response.resolvedFilters,
       };
 
-      // Cache the fresh response
       cacheRef.current.set(cacheKey(newApplied), dashboardResponse);
       applyResolvedDashboard(dashboardResponse, newApplied);
       const hasDashboardData =
@@ -807,12 +841,17 @@ export default function HomePage() {
         dashboardResponse.families.length > 0;
 
       if (hasDashboardData) {
+        console.timeEnd("refresh-total-ui");
         void showRefreshSuccess("Datos actualizados correctamente.");
       } else if (response.warning) {
+        console.timeEnd("refresh-total-ui");
         void showRefreshWarning(response.warning);
       }
     } catch (error) {
-      setRefreshError(error instanceof Error ? error.message : "No se pudo actualizar la información.");
+      console.timeEnd("refresh-total-ui");
+      if (error instanceof Error && error.name !== "AbortError") {
+        setRefreshError(error.message || "No se pudo actualizar la información.");
+      }
     } finally {
       setIsRefreshing(false);
     }
