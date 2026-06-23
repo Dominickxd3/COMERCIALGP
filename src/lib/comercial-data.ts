@@ -622,7 +622,7 @@ export async function refreshCommercialData(filters: DashboardFilters) {
     await pool.request()
       .input("Periodo", sql.VarChar(6), `${year}${period}`)
       .input("Fecha", sql.VarChar(8), date)
-      .input("EjecutarSPRemoto", sql.Bit, false)
+      .input("EjecutarSPRemoto", sql.Bit, true)
       .execute(REFRESH_SP);
     spDuration = Math.round(performance.now() - spStart);
   }
