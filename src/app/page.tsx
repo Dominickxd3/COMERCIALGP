@@ -507,7 +507,12 @@ function HeaderActions({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const isMobile = useIsMobile();
+  const rawIsMobile = useIsMobile();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  const isMobile = isMounted ? rawIsMobile : false;
   const { setActions } = useHeaderActions();
   const currentDefaults = useMemo(() => getDefaultCommercialFilters(), []);
 
@@ -807,17 +812,26 @@ export default function HomePage() {
 
       setRefreshStage("Consultando estado…");
 
-      const poll = async (): Promise<RefreshResponse> => {
-        const res = await fetchJson<StatusResponse>(
-          `/api/comercial/refresh/status?id=${jobId}`,
-        );
-        if (res.state === "done") {
-          console.timeEnd("poll-status");
-          return res;
+      const poll = async (retries = 0): Promise<RefreshResponse> => {
+        try {
+          const res = await fetchJson<StatusResponse>(
+            `/api/comercial/refresh/status?id=${jobId}`,
+          );
+          if (res.state === "done") {
+            console.timeEnd("poll-status");
+            return res;
+          }
+          if (res.state === "error") throw new Error(res.error || "Error en refresh");
+          await new Promise((r) => setTimeout(r, 2000));
+          return poll(0);
+        } catch (err) {
+          if (retries < 5) {
+            console.warn(`[poll] Reintentando consulta de estado (intento ${retries + 1}/5)...`, err);
+            await new Promise((r) => setTimeout(r, 3000));
+            return poll(retries + 1);
+          }
+          throw err;
         }
-        if (res.state === "error") throw new Error(res.error || "Error en refresh");
-        await new Promise((r) => setTimeout(r, 2000));
-        return poll();
       };
 
       const response = await poll();

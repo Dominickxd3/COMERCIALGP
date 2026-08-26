@@ -114,7 +114,7 @@ export function CommercialEvolutionChart({ data }: { data: EvolucionMensual[]; s
       <CardContent className="pt-3">
         <div className="h-[240px] w-full md:h-[320px]">
           <ChartContainer className="h-full w-full" config={chartConfig}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
               <BarChart
                 data={data}
                 margin={{ top: 20, right: 32, left: 24, bottom: 20 }}
