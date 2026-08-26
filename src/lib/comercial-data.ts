@@ -260,18 +260,37 @@ async function getAvailablePeriods(year: string) {
     .map((row: { period: string }) => row.period?.trim())
     .filter((value: string | undefined): value is string => Boolean(value));
 
-  if (periods.length > 0) {
-    return periods;
-  }
-
   const currentDefaults = getDefaultCommercialFilters();
-  if (year === currentDefaults.year) {
-    return Array.from({ length: Number(currentDefaults.month) }, (_, index) =>
-      String(index + 1).padStart(2, "0"),
-    );
+  const currentMonth = Number(currentDefaults.month);
+  const currentMonthLabel = currentDefaults.month; // ej: "08"
+
+  // Siempre incluimos el mes actual del sistema, aunque la BD tenga datos antiguos
+  // Si es enero, solo agregamos enero; si es julio o agosto, agregamos julio y agosto
+  let additionalPeriods: string[];
+  if (currentMonth <= 2) {
+    // Enero o febrero: solo el mes actual
+    additionalPeriods = [String(currentMonth).padStart(2, "0")];
+  } else {
+    // De marzo en adelante: agregar el mes actual y el mes anterior
+    const prevMonth = currentMonth - 1;
+    additionalPeriods = [
+      String(prevMonth).padStart(2, "0"),
+      String(currentMonth).padStart(2, "0"),
+    ];
   }
 
-  return [];
+  // Siempre incluimos el(s) mes(es) adicional(es) a los de la BD
+  const allPeriods = [...new Set([...periods, ...additionalPeriods])];
+
+  // Si la BD tiene datos, retornarlos ordenados (incluyendo el mes actual)
+  if (periods.length > 0) {
+    return allPeriods.sort((a, b) => Number(a) - Number(b));
+  }
+
+  // Fallback: si la BD está vacía, retornar todos los meses hasta el actual
+  return Array.from({ length: currentMonth }, (_, index) =>
+    String(index + 1).padStart(2, "0"),
+  );
 }
 
 async function getOptionRows(year: string, period: string, origin: string) {

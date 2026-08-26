@@ -235,9 +235,15 @@ function resolveInitialWeek(
     return "Todas";
   }
 
-  // Prefer the current ISO week if it exists in the available weeks
+  // Always prefer the current ISO week if we're in the current period,
+  // even if it's not explicitly in availableWeeks — fall back to last available
   if (availableWeeks.includes(defaults.week)) {
     return defaults.week;
+  }
+
+  // If current week not available but we're in current period, use last available week
+  if (isCurrentPeriod) {
+    return availableWeeks.at(-1) ?? "Todas";
   }
 
   // Fall back to the last available week in the period
@@ -768,7 +774,9 @@ export default function HomePage() {
   // handleRefresh — starts SP async, polls status, never blocks UI
   // ────────────────────────────────────────────────────────────────────────────
   const handleRefresh = useCallback(async () => {
-    if (isRefreshing || !filterDraft.year) return;
+    if (isRefreshing) return;
+    const year = filterDraft.year || currentDefaults.year;
+    if (!year) return;
 
     setIsRefreshing(true);
     setRefreshStage("Iniciando actualización…");
@@ -785,7 +793,7 @@ export default function HomePage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            year:   filterDraft.year,
+            year:   year,
             period: filterDraft.mes,
             week:   filterDraft.semana,
             date:   filterDraft.version,
