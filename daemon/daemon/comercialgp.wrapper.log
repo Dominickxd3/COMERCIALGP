@@ -1,0 +1,464 @@
+2026-06-20 11:34:49 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-06-20 11:34:49 - Started 7992
+2026-06-20 14:54:44 - Stopping comercialgp.exe
+2026-06-20 14:54:44 - ProcessKill 7992
+2026-06-20 14:54:45 - Shutdown exception
+Message:El servidor de objeto se va a detener cuando el servicio de OLE se ponga en contacto con él (Excepción de HRESULT: 0x80080008 (CO_E_SERVER_STOPPING))
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-06-20 15:01:23 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-06-20 15:01:24 - Started 5420
+2026-06-20 17:35:53 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-06-20 17:35:54 - Started 2228
+2026-06-23 08:50:05 - Stopping comercialgp.exe
+2026-06-23 08:50:05 - ProcessKill 2228
+2026-06-23 08:50:06 - Found child process: 5128 Name: conhost.exe
+2026-06-23 08:50:06 - Found child process: 6012 Name: node.exe
+2026-06-23 08:50:06 - Stopping process 5128
+2026-06-23 08:50:06 - Send SIGINT 5128
+2026-06-23 08:50:06 - SIGINT to 5128 failed - Killing as fallback
+2026-06-23 08:50:06 - Found child process: 84 Name: node.exe
+2026-06-23 08:50:06 - Found child process: 4196 Name: conhost.exe
+2026-06-23 08:50:06 - Stopping process 4196
+2026-06-23 08:50:06 - Send SIGINT 4196
+2026-06-23 08:50:06 - SIGINT to 4196 failed - Killing as fallback
+2026-06-23 08:50:06 - Stopping process 84
+2026-06-23 08:50:06 - Send SIGINT 84
+2026-06-23 08:50:06 - SIGINT to 84 failed - Killing as fallback
+2026-06-23 08:50:06 - Stopping process 6012
+2026-06-23 08:50:07 - Send SIGINT 6012
+2026-06-23 08:50:07 - SIGINT to 6012 failed - Killing as fallback
+2026-06-23 08:50:07 - Stop exception
+Message:Acceso denegado
+Stacktrace:   en System.Diagnostics.Process.Kill()
+   en winsw.WrapperService.StopProcess(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnStop()
+2026-06-23 09:50:15 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-06-23 09:50:16 - Started 7668
+2026-06-23 10:17:11 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-06-23 10:17:11 - Started 8900
+2026-06-23 10:18:05 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-06-23 10:18:05 - Started 7212
+2026-06-23 10:30:53 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-06-23 10:30:53 - Started 3784
+2026-06-23 10:31:25 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-06-23 10:31:25 - Started 8208
+2026-07-15 17:19:52 - Stopping comercialgp.exe
+2026-07-15 17:19:52 - ProcessKill 8208
+2026-07-15 17:19:54 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-07-15 17:21:59 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-07-15 17:22:01 - Started 5632
+2026-07-15 17:23:14 - Stopping comercialgp.exe
+2026-07-15 17:23:14 - ProcessKill 5632
+2026-07-15 17:23:16 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-07-15 17:24:08 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-07-15 17:24:08 - Started 3196
+2026-08-11 17:19:09 - Stopping comercialgp.exe
+2026-08-11 17:19:09 - Finished comercialgp.exe
+2026-08-11 17:20:26 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-11 17:20:26 - Started 3036
+2026-08-11 17:21:48 - Stopping comercialgp.exe
+2026-08-11 17:21:48 - ProcessKill 3036
+2026-08-11 17:21:50 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-08-11 17:22:41 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-11 17:22:42 - Started 5540
+2026-08-22 13:50:35 - Stopping comercialgp.exe
+2026-08-22 13:50:35 - ProcessKill 5540
+2026-08-22 13:50:35 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-08-22 13:53:56 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-22 13:53:57 - Started 5560
+2026-08-23 01:51:45 - Stopping comercialgp.exe
+2026-08-23 01:51:45 - ProcessKill 5560
+2026-08-23 01:51:46 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-08-23 01:53:02 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-23 01:53:03 - Started 5860
+2026-08-23 02:02:27 - Stopping comercialgp.exe
+2026-08-23 02:02:28 - ProcessKill 5860
+2026-08-23 02:02:31 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-08-23 02:03:41 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-23 02:03:42 - Started 5636
+2026-08-23 17:06:14 - Stopping comercialgp.exe
+2026-08-23 17:06:14 - ProcessKill 5636
+2026-08-23 17:06:15 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-08-23 17:07:40 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-23 17:07:40 - Started 5520
+2026-08-24 12:23:04 - Stopping comercialgp.exe
+2026-08-24 12:23:05 - ProcessKill 5520
+2026-08-24 12:23:05 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-08-24 12:24:34 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-24 12:24:35 - Started 5956
+2026-08-25 12:42:55 - Stopping comercialgp.exe
+2026-08-25 12:42:55 - ProcessKill 5956
+2026-08-25 12:42:57 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-08-25 12:44:25 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-25 12:44:25 - Started 5756
+2026-08-25 15:22:03 - Stopping comercialgp.exe
+2026-08-25 15:22:03 - ProcessKill 5756
+2026-08-25 15:22:05 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-08-25 15:23:23 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-25 15:23:24 - Started 6116
+2026-08-26 09:25:46 - Stopping comercialgp.exe
+2026-08-26 09:25:46 - ProcessKill 6116
+2026-08-26 09:25:47 - Shutdown exception
+Message:Se está cerrando el sistema. (Excepción de HRESULT: 0x8007045B)
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-08-26 09:37:55 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 09:37:55 - Started 8972
+2026-08-26 13:47:36 - Stopping comercialgp.exe
+2026-08-26 13:47:36 - ProcessKill 8972
+2026-08-26 13:47:37 - Found child process: 8968 Name: conhost.exe
+2026-08-26 13:47:37 - Found child process: 8336 Name: node.exe
+2026-08-26 13:47:37 - Stopping process 8968
+2026-08-26 13:47:37 - Send SIGINT 8968
+2026-08-26 13:47:37 - SIGINT to 8968 failed - Killing as fallback
+2026-08-26 13:47:37 - Found child process: 4512 Name: node.exe
+2026-08-26 13:47:37 - Found child process: 1696 Name: conhost.exe
+2026-08-26 13:47:37 - Stopping process 1696
+2026-08-26 13:47:37 - Send SIGINT 1696
+2026-08-26 13:47:37 - SIGINT to 1696 failed - Killing as fallback
+2026-08-26 13:47:37 - Stopping process 4512
+2026-08-26 13:47:37 - Send SIGINT 4512
+2026-08-26 13:47:37 - SIGINT to 4512 failed - Killing as fallback
+2026-08-26 13:47:37 - Stopping process 8336
+2026-08-26 13:47:37 - Send SIGINT 8336
+2026-08-26 13:47:37 - SIGINT to 8336 failed - Killing as fallback
+2026-08-26 13:47:37 - Stopping process 8972
+2026-08-26 13:47:37 - Send SIGINT 8972
+2026-08-26 13:47:37 - SIGINT to 8972 failed - Killing as fallback
+2026-08-26 13:47:37 - Finished comercialgp.exe
+2026-08-26 13:48:07 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 13:48:07 - Started 10436
+2026-08-26 15:46:14 - Stopping comercialgp.exe
+2026-08-26 15:46:14 - ProcessKill 10436
+2026-08-26 15:46:15 - Found child process: 9964 Name: conhost.exe
+2026-08-26 15:46:15 - Found child process: 1116 Name: node.exe
+2026-08-26 15:46:15 - Stopping process 9964
+2026-08-26 15:46:15 - Send SIGINT 9964
+2026-08-26 15:46:15 - SIGINT to 9964 failed - Killing as fallback
+2026-08-26 15:46:15 - Found child process: 10304 Name: node.exe
+2026-08-26 15:46:15 - Found child process: 10656 Name: conhost.exe
+2026-08-26 15:46:15 - Stopping process 10656
+2026-08-26 15:46:15 - Send SIGINT 10656
+2026-08-26 15:46:15 - SIGINT to 10656 failed - Killing as fallback
+2026-08-26 15:46:15 - Stopping process 10304
+2026-08-26 15:46:15 - Send SIGINT 10304
+2026-08-26 15:46:15 - SIGINT to 10304 failed - Killing as fallback
+2026-08-26 15:46:15 - Stopping process 1116
+2026-08-26 15:46:15 - Send SIGINT 1116
+2026-08-26 15:46:15 - SIGINT to 1116 failed - Killing as fallback
+2026-08-26 15:46:15 - Stopping process 10436
+2026-08-26 15:46:15 - Send SIGINT 10436
+2026-08-26 15:46:15 - SIGINT to 10436 failed - Killing as fallback
+2026-08-26 15:46:15 - Finished comercialgp.exe
+2026-08-26 16:24:26 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 16:24:26 - Started 10012
+2026-08-26 16:41:10 - Stopping comercialgp.exe
+2026-08-26 16:41:10 - ProcessKill 10012
+2026-08-26 16:41:11 - Found child process: 7040 Name: conhost.exe
+2026-08-26 16:41:11 - Found child process: 5340 Name: node.exe
+2026-08-26 16:41:11 - Stopping process 7040
+2026-08-26 16:41:11 - Send SIGINT 7040
+2026-08-26 16:41:11 - SIGINT to 7040 failed - Killing as fallback
+2026-08-26 16:41:11 - Found child process: 11292 Name: node.exe
+2026-08-26 16:41:11 - Found child process: 13272 Name: conhost.exe
+2026-08-26 16:41:11 - Stopping process 13272
+2026-08-26 16:41:11 - Send SIGINT 13272
+2026-08-26 16:41:11 - SIGINT to 13272 failed - Killing as fallback
+2026-08-26 16:41:11 - Stopping process 11292
+2026-08-26 16:41:11 - Send SIGINT 11292
+2026-08-26 16:41:11 - SIGINT to 11292 failed - Killing as fallback
+2026-08-26 16:41:11 - Stopping process 5340
+2026-08-26 16:41:11 - Send SIGINT 5340
+2026-08-26 16:41:11 - SIGINT to 5340 failed - Killing as fallback
+2026-08-26 16:41:11 - Stopping process 10012
+2026-08-26 16:41:11 - Send SIGINT 10012
+2026-08-26 16:41:11 - SIGINT to 10012 failed - Killing as fallback
+2026-08-26 16:41:11 - Finished comercialgp.exe
+2026-08-26 16:41:12 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 16:41:12 - Started 11548
+2026-08-26 17:16:42 - Stopping comercialgp.exe
+2026-08-26 17:16:42 - ProcessKill 11548
+2026-08-26 17:16:42 - Found child process: 1300 Name: conhost.exe
+2026-08-26 17:16:42 - Found child process: 10068 Name: node.exe
+2026-08-26 17:16:42 - Stopping process 1300
+2026-08-26 17:16:42 - Send SIGINT 1300
+2026-08-26 17:16:42 - SIGINT to 1300 failed - Killing as fallback
+2026-08-26 17:16:42 - Found child process: 10684 Name: node.exe
+2026-08-26 17:16:42 - Found child process: 12108 Name: conhost.exe
+2026-08-26 17:16:42 - Stopping process 12108
+2026-08-26 17:16:42 - Send SIGINT 12108
+2026-08-26 17:16:42 - SIGINT to 12108 failed - Killing as fallback
+2026-08-26 17:16:42 - Stopping process 10684
+2026-08-26 17:16:42 - Send SIGINT 10684
+2026-08-26 17:16:42 - SIGINT to 10684 failed - Killing as fallback
+2026-08-26 17:16:42 - Stopping process 10068
+2026-08-26 17:16:42 - Send SIGINT 10068
+2026-08-26 17:16:42 - SIGINT to 10068 failed - Killing as fallback
+2026-08-26 17:16:42 - Stopping process 11548
+2026-08-26 17:16:42 - Send SIGINT 11548
+2026-08-26 17:16:42 - SIGINT to 11548 failed - Killing as fallback
+2026-08-26 17:16:42 - Finished comercialgp.exe
+2026-08-26 17:26:22 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 17:26:22 - Started 11500
+2026-08-26 17:36:47 - Stopping comercialgp.exe
+2026-08-26 17:36:47 - ProcessKill 11500
+2026-08-26 17:36:47 - Found child process: 10972 Name: conhost.exe
+2026-08-26 17:36:47 - Found child process: 13156 Name: node.exe
+2026-08-26 17:36:47 - Stopping process 10972
+2026-08-26 17:36:47 - Send SIGINT 10972
+2026-08-26 17:36:47 - SIGINT to 10972 failed - Killing as fallback
+2026-08-26 17:36:47 - Found child process: 12976 Name: node.exe
+2026-08-26 17:36:47 - Found child process: 9376 Name: conhost.exe
+2026-08-26 17:36:47 - Stopping process 9376
+2026-08-26 17:36:47 - Send SIGINT 9376
+2026-08-26 17:36:47 - SIGINT to 9376 failed - Killing as fallback
+2026-08-26 17:36:47 - Stopping process 12976
+2026-08-26 17:36:47 - Send SIGINT 12976
+2026-08-26 17:36:47 - SIGINT to 12976 failed - Killing as fallback
+2026-08-26 17:36:47 - Stopping process 13156
+2026-08-26 17:36:47 - Send SIGINT 13156
+2026-08-26 17:36:47 - SIGINT to 13156 failed - Killing as fallback
+2026-08-26 17:36:47 - Stopping process 11500
+2026-08-26 17:36:47 - Send SIGINT 11500
+2026-08-26 17:36:47 - SIGINT to 11500 failed - Killing as fallback
+2026-08-26 17:36:47 - Finished comercialgp.exe
+2026-08-26 17:36:48 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 17:36:48 - Started 9420
+2026-08-26 17:43:18 - Stopping comercialgp.exe
+2026-08-26 17:43:18 - ProcessKill 9420
+2026-08-26 17:43:18 - Found child process: 12356 Name: conhost.exe
+2026-08-26 17:43:18 - Found child process: 1276 Name: node.exe
+2026-08-26 17:43:18 - Stopping process 12356
+2026-08-26 17:43:18 - Send SIGINT 12356
+2026-08-26 17:43:18 - SIGINT to 12356 failed - Killing as fallback
+2026-08-26 17:43:18 - Found child process: 7720 Name: node.exe
+2026-08-26 17:43:18 - Found child process: 12688 Name: conhost.exe
+2026-08-26 17:43:18 - Stopping process 12688
+2026-08-26 17:43:18 - Send SIGINT 12688
+2026-08-26 17:43:18 - SIGINT to 12688 failed - Killing as fallback
+2026-08-26 17:43:18 - Stopping process 7720
+2026-08-26 17:43:18 - Send SIGINT 7720
+2026-08-26 17:43:18 - SIGINT to 7720 failed - Killing as fallback
+2026-08-26 17:43:18 - Stopping process 1276
+2026-08-26 17:43:18 - Send SIGINT 1276
+2026-08-26 17:43:18 - SIGINT to 1276 failed - Killing as fallback
+2026-08-26 17:43:18 - Stopping process 9420
+2026-08-26 17:43:18 - Send SIGINT 9420
+2026-08-26 17:43:18 - SIGINT to 9420 failed - Killing as fallback
+2026-08-26 17:43:18 - Finished comercialgp.exe
+2026-08-26 17:43:19 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 17:43:19 - Started 11856
+2026-08-26 17:50:43 - Stopping comercialgp.exe
+2026-08-26 17:50:43 - ProcessKill 11856
+2026-08-26 17:50:43 - Found child process: 10588 Name: conhost.exe
+2026-08-26 17:50:43 - Found child process: 7076 Name: node.exe
+2026-08-26 17:50:43 - Stopping process 10588
+2026-08-26 17:50:43 - Send SIGINT 10588
+2026-08-26 17:50:43 - SIGINT to 10588 failed - Killing as fallback
+2026-08-26 17:50:43 - Found child process: 1720 Name: node.exe
+2026-08-26 17:50:43 - Found child process: 2832 Name: conhost.exe
+2026-08-26 17:50:43 - Stopping process 2832
+2026-08-26 17:50:43 - Send SIGINT 2832
+2026-08-26 17:50:43 - SIGINT to 2832 failed - Killing as fallback
+2026-08-26 17:50:43 - Stopping process 1720
+2026-08-26 17:50:43 - Send SIGINT 1720
+2026-08-26 17:50:43 - SIGINT to 1720 failed - Killing as fallback
+2026-08-26 17:50:43 - Stopping process 7076
+2026-08-26 17:50:43 - Send SIGINT 7076
+2026-08-26 17:50:43 - SIGINT to 7076 failed - Killing as fallback
+2026-08-26 17:50:43 - Stopping process 11856
+2026-08-26 17:50:43 - Send SIGINT 11856
+2026-08-26 17:50:43 - SIGINT to 11856 failed - Killing as fallback
+2026-08-26 17:50:43 - Finished comercialgp.exe
+2026-08-26 17:50:45 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 17:50:45 - Started 12468
+2026-08-26 17:51:20 - Stopping comercialgp.exe
+2026-08-26 17:51:20 - ProcessKill 12468
+2026-08-26 17:51:20 - Found child process: 10924 Name: conhost.exe
+2026-08-26 17:51:20 - Found child process: 5500 Name: node.exe
+2026-08-26 17:51:20 - Stopping process 10924
+2026-08-26 17:51:20 - Send SIGINT 10924
+2026-08-26 17:51:20 - SIGINT to 10924 failed - Killing as fallback
+2026-08-26 17:51:20 - Found child process: 12600 Name: node.exe
+2026-08-26 17:51:20 - Found child process: 3104 Name: conhost.exe
+2026-08-26 17:51:21 - Stopping process 3104
+2026-08-26 17:51:21 - Send SIGINT 3104
+2026-08-26 17:51:21 - SIGINT to 3104 failed - Killing as fallback
+2026-08-26 17:51:21 - Stopping process 12600
+2026-08-26 17:51:21 - Send SIGINT 12600
+2026-08-26 17:51:21 - SIGINT to 12600 failed - Killing as fallback
+2026-08-26 17:51:21 - Stopping process 5500
+2026-08-26 17:51:21 - Send SIGINT 5500
+2026-08-26 17:51:21 - SIGINT to 5500 failed - Killing as fallback
+2026-08-26 17:51:21 - Stopping process 12468
+2026-08-26 17:51:21 - Send SIGINT 12468
+2026-08-26 17:51:21 - SIGINT to 12468 failed - Killing as fallback
+2026-08-26 17:51:21 - Finished comercialgp.exe
+2026-08-26 17:51:22 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 17:51:22 - Started 13268
+2026-08-26 18:00:30 - Stopping comercialgp.exe
+2026-08-26 18:00:30 - ProcessKill 13268
+2026-08-26 18:00:30 - Found child process: 7784 Name: conhost.exe
+2026-08-26 18:00:30 - Found child process: 5272 Name: node.exe
+2026-08-26 18:00:30 - Stopping process 7784
+2026-08-26 18:00:30 - Send SIGINT 7784
+2026-08-26 18:00:30 - SIGINT to 7784 failed - Killing as fallback
+2026-08-26 18:00:30 - Found child process: 12504 Name: node.exe
+2026-08-26 18:00:30 - Found child process: 5552 Name: conhost.exe
+2026-08-26 18:00:30 - Stopping process 5552
+2026-08-26 18:00:30 - Send SIGINT 5552
+2026-08-26 18:00:30 - SIGINT to 5552 failed - Killing as fallback
+2026-08-26 18:00:30 - Stopping process 12504
+2026-08-26 18:00:30 - Send SIGINT 12504
+2026-08-26 18:00:30 - SIGINT to 12504 failed - Killing as fallback
+2026-08-26 18:00:30 - Stopping process 5272
+2026-08-26 18:00:30 - Send SIGINT 5272
+2026-08-26 18:00:30 - SIGINT to 5272 failed - Killing as fallback
+2026-08-26 18:00:30 - Stopping process 13268
+2026-08-26 18:00:30 - Send SIGINT 13268
+2026-08-26 18:00:30 - SIGINT to 13268 failed - Killing as fallback
+2026-08-26 18:00:30 - Finished comercialgp.exe
+2026-08-26 18:00:31 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-26 18:00:31 - Started 7264
+2026-08-28 07:46:49 - Starting C:\Program Files\nodejs\node.exe  --harmony C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\node_modules\node-windows\lib\wrapper.js --file C:\inetpub\wwwroot\COMERCIAL_WEB_GERENCIA\daemon\comercialgp-service.js --scriptoptions= --log "ComercialGP wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-08-28 07:46:49 - Started 8528
+2026-08-28 08:09:16 - Stopping comercialgp.exe
+2026-08-28 08:09:16 - ProcessKill 8528
+2026-08-28 08:09:16 - Found child process: 8532 Name: conhost.exe
+2026-08-28 08:09:16 - Found child process: 5324 Name: node.exe
+2026-08-28 08:09:16 - Stopping process 8532
+2026-08-28 08:09:16 - Send SIGINT 8532
+2026-08-28 08:09:16 - SIGINT to 8532 failed - Killing as fallback
+2026-08-28 08:09:16 - Found child process: 4912 Name: node.exe
+2026-08-28 08:09:16 - Found child process: 8612 Name: conhost.exe
+2026-08-28 08:09:16 - Stopping process 8612
+2026-08-28 08:09:16 - Send SIGINT 8612
+2026-08-28 08:09:16 - SIGINT to 8612 failed - Killing as fallback
+2026-08-28 08:09:16 - Stopping process 4912
+2026-08-28 08:09:16 - Send SIGINT 4912
+2026-08-28 08:09:16 - SIGINT to 4912 failed - Killing as fallback
+2026-08-28 08:09:16 - Stopping process 5324
+2026-08-28 08:09:16 - Send SIGINT 5324
+2026-08-28 08:09:16 - SIGINT to 5324 failed - Killing as fallback
+2026-08-28 08:09:16 - Stopping process 8528
+2026-08-28 08:09:16 - Send SIGINT 8528
+2026-08-28 08:09:16 - SIGINT to 8528 failed - Killing as fallback
+2026-08-28 08:09:16 - Finished comercialgp.exe
